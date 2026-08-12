@@ -2,9 +2,11 @@ import { supabaseServer } from "@/lib/supabase/server";
 import { SectionTitle } from "@/components/Brand";
 import { EstrategiaClient } from "@/components/EstrategiaClient";
 import { RecomendacaoSection } from "@/components/RecomendacaoSection";
+import { ProjecaoSection } from "@/components/ProjecaoSection";
 import { C } from "@/lib/designTokens";
 import { monthBounds, getAvailableMonths } from "@/lib/months";
 import { buildWeeklyPrompt } from "@/lib/promptBuilder";
+import { computeWeeklyProjection } from "@/lib/projection";
 
 export const dynamic = "force-dynamic";
 
@@ -85,6 +87,16 @@ export default async function EstrategiaPage({
       origin: tags[p.id].origin,
     }));
 
+  const projecaoData = await computeWeeklyProjection();
+
+  const todasTags = tagsData ?? [];
+  const testesResumo = {
+    total: todasTags.length,
+    confirmadas: todasTags.filter((t) => t.hypothesis_status === "Confirmada").length,
+    refutadas: todasTags.filter((t) => t.hypothesis_status === "Refutada").length,
+    observando: todasTags.filter((t) => !t.hypothesis_status || t.hypothesis_status === "Observar").length,
+  };
+
   const prompt = buildWeeklyPrompt({
     mes: mesSelecionado,
     totalPosts: doMes.length,
@@ -106,6 +118,7 @@ export default async function EstrategiaPage({
         horarioInicial={horario}
         contextoInicial={contexto?.context_text ?? ""}
       />
+      <ProjecaoSection projecaoData={projecaoData} testesResumo={testesResumo} />
       <RecomendacaoSection
         prompt={prompt}
         contextoAtual={contexto?.context_text ?? ""}

@@ -19,6 +19,11 @@ function toISODate(d: Date): string {
 
 export type Semana = { start: string; end: string };
 
+// Dado um "YYYY-MM-DD", devolve a segunda-feira daquela semana no mesmo formato.
+export function mondayOf(dateStr: string): string {
+  return toISODate(toMonday(new Date(dateStr + "T00:00:00")));
+}
+
 // Lista todas as semanas (segunda a domingo) que tocam algum dia com post de feed,
 // da mais recente pra mais antiga.
 export async function getAvailableWeeks(): Promise<Semana[]> {
