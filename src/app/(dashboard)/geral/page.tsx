@@ -4,7 +4,7 @@ import { FormatBarChart } from "@/components/FormatBarChart";
 import { DailyTrendChart, type DailyPoint } from "@/components/DailyTrendChart";
 import { C, TIPO_COLORS } from "@/lib/designTokens";
 import { fmt, fmtDate, median } from "@/lib/metrics";
-import { monthBounds, monthLabelCap, getAvailableMonths } from "@/lib/months";
+import { resolvePeriod, type PeriodSearchParams } from "@/lib/period";
 
 export const dynamic = "force-dynamic";
 
@@ -25,9 +25,8 @@ type FeedRow = {
 export default async function GeralPage({
   searchParams,
 }: {
-  searchParams: Promise<{ mes?: string }>;
+  searchParams: Promise<PeriodSearchParams>;
 }) {
-  const { mes } = await searchParams;
   const supabase = supabaseServer();
   const { data, error } = await supabase
     .from("feed_posts")
@@ -57,9 +56,8 @@ export default async function GeralPage({
     );
   }
 
-  const meses = await getAvailableMonths();
-  const mesSelecionado = mes && meses.includes(mes) ? mes : meses[0];
-  const doMes = posts.filter((p) => p.post_date.startsWith(mesSelecionado));
+  const period = await resolvePeriod(await searchParams);
+  const doMes = posts.filter((p) => p.post_date >= period.start && p.post_date <= period.end);
 
   const totais = doMes.reduce(
     (acc, p) => ({
@@ -87,12 +85,11 @@ export default async function GeralPage({
   const melhor = ordenadoPorViews[0];
   const pior = ordenadoPorViews[ordenadoPorViews.length - 1];
 
-  const { start, end } = monthBounds(mesSelecionado);
   const { data: dailyRaw } = await supabase
     .from("daily_account_metrics")
     .select("*")
-    .gte("metric_date", start)
-    .lte("metric_date", end)
+    .gte("metric_date", period.start)
+    .lte("metric_date", period.end)
     .order("metric_date", { ascending: true });
 
   const dailyMap = new Map<string, DailyPoint>();
@@ -109,7 +106,7 @@ export default async function GeralPage({
     <div className="baz-fade-up">
       <SectionTitle>Visão Geral</SectionTitle>
       <p style={{ color: C.cinza, fontSize: 12, marginTop: -8, marginBottom: 20 }}>
-        {monthLabelCap(mesSelecionado)} · {doMes.length} posts de feed
+        {period.label} · {doMes.length} posts de feed
       </p>
 
       {daily.length > 0 && <DailyTrendChart data={daily} />}

@@ -2,19 +2,24 @@ import { supabaseServer } from "@/lib/supabase/server";
 import { SectionTitle } from "@/components/Brand";
 import { AgeGenderChart } from "@/components/AgeGenderChart";
 import { C } from "@/lib/designTokens";
+import { resolvePeriod, type PeriodSearchParams } from "@/lib/period";
+import { fmtDate } from "@/lib/metrics";
 
 export const dynamic = "force-dynamic";
 
 type Item = { local: string; pct: number };
 
-export default async function PublicoPage() {
+export default async function PublicoPage({
+  searchParams,
+}: {
+  searchParams: Promise<PeriodSearchParams>;
+}) {
+  const period = await resolvePeriod(await searchParams);
   const supabase = supabaseServer();
-  const { data, error } = await supabase
+  const { data: snapshots, error } = await supabase
     .from("audience_snapshots")
     .select("*")
-    .order("snapshot_date", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+    .order("snapshot_date", { ascending: false });
 
   if (error) {
     return (
@@ -25,12 +30,18 @@ export default async function PublicoPage() {
     );
   }
 
+  // Público é sempre um retrato do momento (a Meta não guarda histórico diário disso) —
+  // por isso mostramos o snapshot mais recente que exista até o fim do período escolhido,
+  // não uma média nem uma soma.
+  const data = (snapshots ?? []).find((s) => s.snapshot_date <= period.end) ?? null;
+
   if (!data) {
     return (
       <div className="baz-fade-up">
         <SectionTitle>Público</SectionTitle>
         <p style={{ color: C.cinza, fontSize: 13 }}>
-          Nenhum snapshot de Público ainda. Suba o CSV de Público na tela de upload.
+          Nenhum snapshot de Público até {period.label.toLowerCase()} ainda. Suba o CSV de Público
+          na tela de upload, ou aguarde a próxima sincronização automática.
         </p>
       </div>
     );
@@ -38,13 +49,17 @@ export default async function PublicoPage() {
 
   const ageGender = data.age_gender as { faixa: string; homens: number; mulheres: number }[];
   const cities = data.top_cities as Item[];
-  const countries = data.top_countries as Item[];
+  const countries = (data.top_countries as Item[]).slice(0, 3);
   const pages = data.top_pages as Item[];
 
   const maxCityPct = cities[0]?.pct || 1;
 
   return (
-    <div className="baz-fade-up baz-row-2col-even">
+    <div className="baz-fade-up">
+      <p style={{ color: C.cinza, fontSize: 12, marginBottom: 16 }}>
+        Retrato de {fmtDate(data.snapshot_date)} · {period.label}
+      </p>
+      <div className="baz-row-2col-even">
       <div style={{ background: C.branco, border: `1px solid ${C.linha}`, borderRadius: 4, padding: 20 }}>
         <SectionTitle>Faixa etária e gênero (%)</SectionTitle>
         <AgeGenderChart data={ageGender} />
@@ -137,6 +152,7 @@ export default async function PublicoPage() {
             <span style={{ fontFamily: "'JetBrains Mono', monospace", fontWeight: 700 }}>{c.pct}%</span>
           </div>
         ))}
+      </div>
       </div>
     </div>
   );

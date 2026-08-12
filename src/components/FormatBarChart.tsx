@@ -33,8 +33,9 @@ export function FormatBarChart({
             fontFamily: "'Montserrat', sans-serif",
             fontSize: 12,
           }}
-          labelStyle={{ color: C.creme }}
-          formatter={(value) => fmt(Number(value))}
+          labelStyle={{ color: C.creme, fontWeight: 700, marginBottom: 2 }}
+          itemStyle={{ color: C.branco }}
+          formatter={(value) => [fmt(Number(value)), "Mediana de views"]}
         />
         <Bar dataKey="medianaViews" radius={[3, 3, 0, 0]}>
           {data.map((entry) => (

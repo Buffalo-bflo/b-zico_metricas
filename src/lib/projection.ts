@@ -1,5 +1,5 @@
 import { supabaseServer } from "@/lib/supabase/server";
-import { mondayOf } from "@/lib/weeks";
+import { sundayOf } from "@/lib/weeks";
 
 const METRIC_TYPES = ["alcance", "views", "visitas", "cliques", "interacoes", "seguidores"] as const;
 
@@ -34,7 +34,7 @@ export async function computeWeeklyProjection(maxSemanas = 4): Promise<Projecao 
   >();
 
   for (const row of data) {
-    const start = mondayOf(row.metric_date);
+    const start = sundayOf(row.metric_date);
     if (!porSemana.has(start)) {
       const endDate = new Date(start + "T00:00:00");
       endDate.setDate(endDate.getDate() + 6);

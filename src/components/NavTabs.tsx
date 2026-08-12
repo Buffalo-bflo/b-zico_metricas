@@ -4,7 +4,7 @@ import { Suspense } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { TabButton } from "@/components/Brand";
 import { C } from "@/lib/designTokens";
-import MonthSelector from "@/components/MonthSelector";
+import PeriodSelector from "@/components/PeriodSelector";
 
 const TABS = [
   { href: "/geral", label: "Visão Geral" },
@@ -37,7 +37,7 @@ export default function NavTabs({ months }: { months: string[] }) {
       <div className="baz-nav-controls">
         {!pathname?.startsWith("/comparar") && (
           <Suspense fallback={null}>
-            <MonthSelector months={months} />
+            <PeriodSelector months={months} />
           </Suspense>
         )}
         <a

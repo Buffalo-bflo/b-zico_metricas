@@ -27,7 +27,7 @@ export function ProjecaoSection({
       {!projecaoData ? (
         <p style={{ fontSize: 13, color: C.cinza }}>
           Ainda não há semanas completas o bastante de métricas diárias pra calcular uma projeção. Suba pelo
-          menos uma semana inteira (segunda a domingo) de métricas diárias.
+          menos uma semana inteira (domingo a sábado) de métricas diárias.
         </p>
       ) : (
         <>

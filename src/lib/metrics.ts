@@ -5,6 +5,13 @@ export const fmtDate = (d: string) => {
   return `${day}/${m}`;
 };
 
+// Hora local de publicação, a partir de um timestamp ISO — ajuda a achar o story de
+// volta no Arquivo do Instagram, que também lista por horário.
+export const fmtTime = (iso: string) => {
+  const d = new Date(iso);
+  return d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+};
+
 export const median = (arr: number[]) => {
   if (!arr.length) return 0;
   const s = [...arr].sort((a, b) => a - b);

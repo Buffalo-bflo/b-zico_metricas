@@ -10,7 +10,12 @@ export type SyncResult = {
 };
 
 const TIME_SERIES_METRICS = ["reach", "follower_count"];
-const TOTAL_VALUE_METRICS = ["profile_views", "total_interactions", "views"];
+// "follows_and_unfollows" está aqui de propósito, mesmo sem retornar dado ainda pra
+// conta da Bázico (testamos várias vezes na sondagem). O código já ignora métricas
+// sem valor (linha abaixo), então não custa nada tentar todo dia — no dia em que a
+// Meta começar a devolver esse dado, ele passa a ser salvo sozinho, sem precisar
+// mexer em mais nada.
+const TOTAL_VALUE_METRICS = ["profile_views", "total_interactions", "views", "follows_and_unfollows"];
 
 // Nome da métrica na API da Meta -> nome que já usamos no banco (mesmo dos CSVs).
 const METRIC_NAME_MAP: Record<string, string> = {
@@ -19,6 +24,7 @@ const METRIC_NAME_MAP: Record<string, string> = {
   profile_views: "visitas",
   total_interactions: "interacoes",
   views: "views",
+  follows_and_unfollows: "seguidores_liquido",
 };
 
 function addDays(iso: string, days: number): string {
@@ -189,7 +195,7 @@ async function syncFeedMedia(
   return { feedPosts, errors };
 }
 
-type StoryItem = { id: string; timestamp: string; media_type: string };
+type StoryItem = { id: string; timestamp: string; media_type: string; caption?: string };
 
 // A Meta só mantém insights de Stories por 24h — o endpoint /stories só lista as que
 // ainda estão ativas agora. Por isso essa sincronização precisa rodar todo dia (é o
@@ -204,11 +210,22 @@ async function syncStories(
   const errors: string[] = [];
 
   try {
-    const page = await graphGet<{ data: StoryItem[] }>(
-      `${igUserId}/stories`,
-      { fields: "id,timestamp,media_type" },
-      token
-    );
+    // "caption" não é documentado pra Stories (só pra Feed), mas tentamos mesmo assim —
+    // se a Meta rejeitar o campo, caímos pro pedido sem ele em vez de perder o dia inteiro.
+    let page: { data: StoryItem[] };
+    try {
+      page = await graphGet<{ data: StoryItem[] }>(
+        `${igUserId}/stories`,
+        { fields: "id,timestamp,media_type,caption" },
+        token
+      );
+    } catch {
+      page = await graphGet<{ data: StoryItem[] }>(
+        `${igUserId}/stories`,
+        { fields: "id,timestamp,media_type" },
+        token
+      );
+    }
 
     for (const item of page.data ?? []) {
       const postDate = item.timestamp.slice(0, 10);
@@ -225,7 +242,8 @@ async function syncStories(
         storyPosts.push({
           id: item.id,
           account_username: "sejabazico",
-          description: "",
+          description: item.caption ?? "",
+          media_type: item.media_type ?? "",
           published_at: item.timestamp,
           post_date: postDate,
           views: byName.views ?? 0,
@@ -290,7 +308,15 @@ async function syncPublico(
       if (genero === "M") ageGenderRows[faixa].homens += r.value;
       else if (genero === "F") ageGenderRows[faixa].mulheres += r.value;
     }
-    const age_gender = Object.entries(ageGenderRows).map(([faixa, v]) => ({ faixa, ...v }));
+    // O gráfico espera percentual do total de seguidores (igual ao CSV da Meta), não a
+    // contagem bruta de pessoas — sem isso o eixo "%" do gráfico mostrava números absurdos.
+    const totalAgeGender =
+      Object.values(ageGenderRows).reduce((a, v) => a + v.homens + v.mulheres, 0) || 1;
+    const age_gender = Object.entries(ageGenderRows).map(([faixa, v]) => ({
+      faixa,
+      homens: Math.round((v.homens / totalAgeGender) * 1000) / 10,
+      mulheres: Math.round((v.mulheres / totalAgeGender) * 1000) / 10,
+    }));
 
     const totalCidades = (cities[0]?.results ?? []).reduce((a, r) => a + r.value, 0) || 1;
     const top_cities = (cities[0]?.results ?? [])

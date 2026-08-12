@@ -211,7 +211,7 @@ export function CompararClient({
 
       {granularidade === "semana" && (
         <p style={{ ...linhaStyle, marginTop: -12, marginBottom: 16 }}>
-          Semanas vão de segunda a domingo — quando uma semana cai na virada do mês (ex: 27/07 – 02/08), ela
+          Semanas vão de domingo a sábado — quando uma semana cai na virada do mês (ex: 26/07 – 01/08), ela
           aparece inteira, com os dias dos dois meses somados.
         </p>
       )}

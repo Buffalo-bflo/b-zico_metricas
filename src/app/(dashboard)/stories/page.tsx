@@ -1,14 +1,16 @@
 import { supabaseServer } from "@/lib/supabase/server";
 import { SectionTitle, KpiCard } from "@/components/Brand";
 import { C } from "@/lib/designTokens";
-import { fmt, fmtDate, median } from "@/lib/metrics";
-import { getAvailableMonths } from "@/lib/months";
+import { fmt, fmtDate, fmtTime, median } from "@/lib/metrics";
+import { resolvePeriod, type PeriodSearchParams } from "@/lib/period";
 
 export const dynamic = "force-dynamic";
 
 type StoryRow = {
   id: string;
   description: string;
+  media_type: string | null;
+  published_at: string;
   post_date: string;
   views: number;
   reach: number;
@@ -17,16 +19,17 @@ type StoryRow = {
   follows: number;
 };
 
+const MEDIA_TYPE_LABEL: Record<string, string> = { IMAGE: "Foto", VIDEO: "Vídeo" };
+
 export default async function StoriesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ mes?: string }>;
+  searchParams: Promise<PeriodSearchParams>;
 }) {
-  const { mes } = await searchParams;
   const supabase = supabaseServer();
   const { data, error } = await supabase
     .from("story_posts")
-    .select("id, description, post_date, views, reach, link_clicks, replies, follows")
+    .select("id, description, media_type, published_at, post_date, views, reach, link_clicks, replies, follows")
     .order("post_date", { ascending: false });
 
   if (error) {
@@ -51,9 +54,8 @@ export default async function StoriesPage({
     );
   }
 
-  const meses = await getAvailableMonths();
-  const mesSelecionado = mes && meses.includes(mes) ? mes : meses[0];
-  const doMes = stories.filter((s) => s.post_date.startsWith(mesSelecionado));
+  const period = await resolvePeriod(await searchParams);
+  const doMes = stories.filter((s) => s.post_date >= period.start && s.post_date <= period.end);
 
   const stats = {
     medianaViews: median(doMes.map((s) => s.views)),
@@ -84,11 +86,11 @@ export default async function StoriesPage({
           <table>
             <thead>
               <tr style={{ borderBottom: `2px solid ${C.preto}` }}>
-                {["Data", "Views", "Alcance", "Cliques", "Respostas", "+Seg."].map((h) => (
+                {["Data", "Hora", "Tipo", "Views", "Alcance", "Cliques", "Respostas", "+Seg.", "Descrição"].map((h) => (
                   <th
                     key={h}
                     style={{
-                      textAlign: h === "Data" ? "left" : "right",
+                      textAlign: h === "Data" || h === "Hora" || h === "Tipo" || h === "Descrição" ? "left" : "right",
                       padding: "8px 10px",
                       fontFamily: "'Montserrat', sans-serif",
                       fontSize: 10,
@@ -109,6 +111,12 @@ export default async function StoriesPage({
                   <td style={{ padding: "9px 10px", fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: C.cinza }}>
                     {fmtDate(s.post_date)}
                   </td>
+                  <td style={{ padding: "9px 10px", fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: C.cinza, whiteSpace: "nowrap" }}>
+                    {fmtTime(s.published_at)}
+                  </td>
+                  <td style={{ padding: "9px 10px", fontFamily: "'Montserrat', sans-serif", fontSize: 12, color: C.preto, whiteSpace: "nowrap" }}>
+                    {s.media_type ? (MEDIA_TYPE_LABEL[s.media_type] ?? s.media_type) : "—"}
+                  </td>
                   <td style={{ padding: "9px 10px", textAlign: "right", fontFamily: "'JetBrains Mono', monospace", fontSize: 12, fontWeight: 700, color: C.preto }}>
                     {fmt(s.views)}
                   </td>
@@ -123,6 +131,9 @@ export default async function StoriesPage({
                   </td>
                   <td style={{ padding: "9px 10px", textAlign: "right", fontFamily: "'JetBrains Mono', monospace", fontSize: 12, color: C.roxo }}>
                     {s.follows > 0 ? `+${s.follows}` : "—"}
+                  </td>
+                  <td style={{ padding: "9px 10px", fontFamily: "'Montserrat', sans-serif", fontSize: 12, color: C.cinza, maxWidth: 220 }}>
+                    {s.description ? s.description.slice(0, 60) : "—"}
                   </td>
                 </tr>
               ))}

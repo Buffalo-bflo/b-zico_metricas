@@ -2,16 +2,15 @@ import { supabaseServer } from "@/lib/supabase/server";
 import { SectionTitle } from "@/components/Brand";
 import { FeedTable, type FeedTableRow } from "@/components/FeedTable";
 import { C } from "@/lib/designTokens";
-import { getAvailableMonths } from "@/lib/months";
+import { resolvePeriod, type PeriodSearchParams } from "@/lib/period";
 
 export const dynamic = "force-dynamic";
 
 export default async function FeedPage({
   searchParams,
 }: {
-  searchParams: Promise<{ mes?: string }>;
+  searchParams: Promise<PeriodSearchParams>;
 }) {
-  const { mes } = await searchParams;
   const supabase = supabaseServer();
   const { data, error } = await supabase
     .from("feed_posts")
@@ -40,9 +39,8 @@ export default async function FeedPage({
     );
   }
 
-  const meses = await getAvailableMonths();
-  const mesSelecionado = mes && meses.includes(mes) ? mes : meses[0];
-  const doMes = posts.filter((p) => p.post_date.startsWith(mesSelecionado));
+  const period = await resolvePeriod(await searchParams);
+  const doMes = posts.filter((p) => p.post_date >= period.start && p.post_date <= period.end);
 
   return (
     <div className="baz-fade-up">
