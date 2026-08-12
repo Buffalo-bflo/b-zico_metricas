@@ -4,15 +4,12 @@ import { supabaseServer } from "@/lib/supabase/server";
 export type SyncResult = {
   dailyMetricRows: number;
   feedPosts: number;
-  storyPostsSkipped: number;
+  storyPosts: number;
+  publicoSalvo: boolean;
   errors: string[];
 };
 
 const TIME_SERIES_METRICS = ["reach", "follower_count"];
-// "cliques" (Cliques no link) ficou de fora de propósito: testamos "website_clicks" e o
-// valor não bateu com o CSV real (698 vs 4.063 num dia de pico) — provavelmente o CSV
-// conta cliques em link de Stories, que ainda não sincronizamos automaticamente. Até
-// achar a métrica certa, esse campo continua vindo só pelo upload de CSV.
 const TOTAL_VALUE_METRICS = ["profile_views", "total_interactions", "views"];
 
 // Nome da métrica na API da Meta -> nome que já usamos no banco (mesmo dos CSVs).
@@ -105,7 +102,6 @@ type MediaItem = {
 };
 
 function mapPostType(item: MediaItem): string | null {
-  if (item.media_product_type === "STORY") return null; // Stories ficam pra próxima fase
   if (item.media_product_type === "REELS") return "Reels";
   if (item.media_type === "CAROUSEL_ALBUM") return "Carrossel";
   if (item.media_type === "IMAGE") return "Imagem";
@@ -117,14 +113,9 @@ async function syncFeedMedia(
   igUserId: string,
   token: string,
   sinceIso: string
-): Promise<{
-  feedPosts: Record<string, unknown>[];
-  storyPostsSkipped: number;
-  errors: string[];
-}> {
+): Promise<{ feedPosts: Record<string, unknown>[]; errors: string[] }> {
   const feedPosts: Record<string, unknown>[] = [];
   const errors: string[] = [];
-  let storyPostsSkipped = 0;
 
   let after: string | undefined;
   let done = false;
@@ -143,6 +134,7 @@ async function syncFeedMedia(
     );
 
     for (const item of page.data ?? []) {
+      if (item.media_product_type === "STORY") continue; // Stories vêm de /stories, não de /media
       const postDate = item.timestamp.slice(0, 10);
       if (postDate < sinceIso) {
         done = true;
@@ -150,10 +142,7 @@ async function syncFeedMedia(
       }
 
       const tipo = mapPostType(item);
-      if (tipo === null) {
-        if (item.media_product_type === "STORY") storyPostsSkipped++;
-        continue;
-      }
+      if (tipo === null) continue;
 
       try {
         const metricsList =
@@ -197,15 +186,147 @@ async function syncFeedMedia(
     if (!after) done = true;
   }
 
-  return { feedPosts, storyPostsSkipped, errors };
+  return { feedPosts, errors };
 }
 
-// Sincroniza os últimos `diasAtras` dias (métricas diárias + posts do feed). Não mexe
-// em Stories nem em Seguidores perdidos/Público — essas continuam manuais por enquanto.
+type StoryItem = { id: string; timestamp: string; media_type: string };
+
+// A Meta só mantém insights de Stories por 24h — o endpoint /stories só lista as que
+// ainda estão ativas agora. Por isso essa sincronização precisa rodar todo dia (é o
+// que o Vercel Cron faz); se um dia o job falhar, os Stories daquele dia se perdem
+// de vez, sem jeito de recuperar depois — não é um bug, é como a própria Meta funciona.
+async function syncStories(
+  igUserId: string,
+  token: string
+): Promise<{ storyPosts: Record<string, unknown>[]; linkClicksPorDia: Map<string, number>; errors: string[] }> {
+  const storyPosts: Record<string, unknown>[] = [];
+  const linkClicksPorDia = new Map<string, number>();
+  const errors: string[] = [];
+
+  try {
+    const page = await graphGet<{ data: StoryItem[] }>(
+      `${igUserId}/stories`,
+      { fields: "id,timestamp,media_type" },
+      token
+    );
+
+    for (const item of page.data ?? []) {
+      const postDate = item.timestamp.slice(0, 10);
+      try {
+        const insights = await graphGet<{ data: { name: string; values: { value: number }[] }[] }>(
+          `${item.id}/insights`,
+          { metric: "reach,views,replies,navigation,link_clicks,follows" },
+          token
+        );
+        const byName = Object.fromEntries(
+          (insights.data ?? []).map((m) => [m.name, m.values?.[0]?.value ?? 0])
+        );
+
+        storyPosts.push({
+          id: item.id,
+          account_username: "sejabazico",
+          description: "",
+          published_at: item.timestamp,
+          post_date: postDate,
+          views: byName.views ?? 0,
+          reach: byName.reach ?? 0,
+          link_clicks: byName.link_clicks ?? 0,
+          replies: byName.replies ?? 0,
+          follows: byName.follows ?? 0,
+          source_file: "sync-api",
+        });
+
+        linkClicksPorDia.set(postDate, (linkClicksPorDia.get(postDate) ?? 0) + (byName.link_clicks ?? 0));
+      } catch (e) {
+        errors.push(`Story ${item.id}: ${e instanceof Error ? e.message : String(e)}`);
+      }
+    }
+  } catch (e) {
+    errors.push(`Lista de stories: ${e instanceof Error ? e.message : String(e)}`);
+  }
+
+  return { storyPosts, linkClicksPorDia, errors };
+}
+
+type DemographicBreakdown = { dimension_keys: string[]; results: { dimension_values: string[]; value: number }[] };
+
+async function fetchDemographicBreakdown(
+  igUserId: string,
+  token: string,
+  breakdown: string
+): Promise<DemographicBreakdown[]> {
+  const data = await graphGet<{ data: { total_value?: { breakdowns?: DemographicBreakdown[] } }[] }>(
+    `${igUserId}/insights`,
+    {
+      metric: "follower_demographics",
+      period: "lifetime",
+      metric_type: "total_value",
+      timeframe: "this_month",
+      breakdown,
+    },
+    token
+  );
+  return data.data?.[0]?.total_value?.breakdowns ?? [];
+}
+
+// Público é sempre um retrato do momento (a Meta não guarda histórico diário disso),
+// então cada sincronização gera um snapshot novo, igual ao upload manual do CSV.
+async function syncPublico(
+  igUserId: string,
+  token: string
+): Promise<{ snapshot: Record<string, unknown> | null; errors: string[] }> {
+  const errors: string[] = [];
+  try {
+    const [ageGender, cities, countries] = await Promise.all([
+      fetchDemographicBreakdown(igUserId, token, "age,gender"),
+      fetchDemographicBreakdown(igUserId, token, "city"),
+      fetchDemographicBreakdown(igUserId, token, "country"),
+    ]);
+
+    const ageGenderRows: Record<string, { homens: number; mulheres: number }> = {};
+    for (const r of ageGender[0]?.results ?? []) {
+      const [faixa, genero] = r.dimension_values;
+      ageGenderRows[faixa] ??= { homens: 0, mulheres: 0 };
+      if (genero === "M") ageGenderRows[faixa].homens += r.value;
+      else if (genero === "F") ageGenderRows[faixa].mulheres += r.value;
+    }
+    const age_gender = Object.entries(ageGenderRows).map(([faixa, v]) => ({ faixa, ...v }));
+
+    const totalCidades = (cities[0]?.results ?? []).reduce((a, r) => a + r.value, 0) || 1;
+    const top_cities = (cities[0]?.results ?? [])
+      .map((r) => ({ local: r.dimension_values[0], pct: Math.round((r.value / totalCidades) * 1000) / 10 }))
+      .sort((a, b) => b.pct - a.pct)
+      .slice(0, 10);
+
+    const totalPaises = (countries[0]?.results ?? []).reduce((a, r) => a + r.value, 0) || 1;
+    const top_countries = (countries[0]?.results ?? [])
+      .map((r) => ({ local: r.dimension_values[0], pct: Math.round((r.value / totalPaises) * 1000) / 10 }))
+      .sort((a, b) => b.pct - a.pct)
+      .slice(0, 10);
+
+    return {
+      snapshot: {
+        snapshot_date: new Date().toISOString().slice(0, 10),
+        age_gender,
+        top_cities,
+        top_countries,
+        top_pages: [],
+      },
+      errors,
+    };
+  } catch (e) {
+    errors.push(`Público: ${e instanceof Error ? e.message : String(e)}`);
+    return { snapshot: null, errors };
+  }
+}
+
+// Sincroniza Feed, métricas diárias, Stories ativos agora e um snapshot de Público.
+// Seguidores perdidos continua manual — o campo existe na API (follows_and_unfollows)
+// mas não tem retornado dado nenhum pra essa conta ainda.
 export async function runMetaSync(diasAtras = 10): Promise<SyncResult> {
   const creds = await getMetaCredentials();
   if (!creds) {
-    return { dailyMetricRows: 0, feedPosts: 0, storyPostsSkipped: 0, errors: ["Integração com a Meta não configurada."] };
+    return { dailyMetricRows: 0, feedPosts: 0, storyPosts: 0, publicoSalvo: false, errors: ["Integração com a Meta não configurada."] };
   }
 
   const hoje = new Date().toISOString().slice(0, 10);
@@ -222,6 +343,15 @@ export async function runMetaSync(diasAtras = 10): Promise<SyncResult> {
   );
   errors.push(...dailyErrors);
 
+  const { storyPosts, linkClicksPorDia, errors: storyErrors } = await syncStories(creds.igUserId, creds.pageAccessToken);
+  errors.push(...storyErrors);
+
+  // "Cliques no link" vem da soma dos Stories ativos agora, por dia — só cobre os dias
+  // que ainda tinham Story disponível na hora da sincronização.
+  for (const [dia, cliques] of linkClicksPorDia) {
+    dailyRows.push({ metric_date: dia, metric_type: "cliques", value: cliques });
+  }
+
   if (dailyRows.length > 0) {
     const { error } = await supabase
       .from("daily_account_metrics")
@@ -229,11 +359,7 @@ export async function runMetaSync(diasAtras = 10): Promise<SyncResult> {
     if (error) errors.push(`Erro ao salvar métricas diárias: ${error.message}`);
   }
 
-  const { feedPosts, storyPostsSkipped, errors: feedErrors } = await syncFeedMedia(
-    creds.igUserId,
-    creds.pageAccessToken,
-    desde
-  );
+  const { feedPosts, errors: feedErrors } = await syncFeedMedia(creds.igUserId, creds.pageAccessToken, desde);
   errors.push(...feedErrors);
 
   if (feedPosts.length > 0) {
@@ -241,10 +367,26 @@ export async function runMetaSync(diasAtras = 10): Promise<SyncResult> {
     if (error) errors.push(`Erro ao salvar posts de feed: ${error.message}`);
   }
 
+  if (storyPosts.length > 0) {
+    const { error } = await supabase.from("story_posts").upsert(storyPosts, { onConflict: "id" });
+    if (error) errors.push(`Erro ao salvar stories: ${error.message}`);
+  }
+
+  const { snapshot, errors: publicoErrors } = await syncPublico(creds.igUserId, creds.pageAccessToken);
+  errors.push(...publicoErrors);
+
+  let publicoSalvo = false;
+  if (snapshot) {
+    const { error } = await supabase.from("audience_snapshots").upsert(snapshot, { onConflict: "snapshot_date" });
+    if (error) errors.push(`Erro ao salvar público: ${error.message}`);
+    else publicoSalvo = true;
+  }
+
   return {
     dailyMetricRows: dailyRows.length,
     feedPosts: feedPosts.length,
-    storyPostsSkipped,
+    storyPosts: storyPosts.length,
+    publicoSalvo,
     errors,
   };
 }

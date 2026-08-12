@@ -39,12 +39,13 @@ function SyncCard() {
       }}
     >
       <div style={{ fontSize: 13, fontWeight: 700, color: C.roxoEscuro, marginBottom: 4 }}>
-        Sincronização automática (Feed + Métricas diárias)
+        Sincronização automática (Feed, Métricas diárias, Stories, Público)
       </div>
       <div style={{ fontSize: 12, color: C.preto, marginBottom: 16 }}>
-        Puxa direto da API da Meta os últimos 10 dias de posts do Feed e métricas diárias da conta —
-        roda sozinha todo dia de madrugada. Use esse botão se quiser forçar agora, sem esperar.
-        Stories, Público e seguidores perdidos continuam pelo upload de CSV abaixo.
+        Puxa direto da API da Meta os últimos 10 dias de Feed e métricas diárias, os Stories que
+        ainda estão ativos agora (a Meta só guarda 24h) e um retrato atual do Público — roda sozinha
+        todo dia de madrugada. Use esse botão se quiser forçar agora. Só Seguidores perdidos continua
+        manual (a Meta ainda não está devolvendo esse dado pra nossa conta).
       </div>
       <button
         onClick={sincronizar}
@@ -61,11 +62,8 @@ function SyncCard() {
         <div style={{ marginTop: 16, fontSize: 13, color: C.preto }}>
           <div>✓ {String(resultado.dailyMetricRows)} linhas de métricas diárias</div>
           <div>✓ {String(resultado.feedPosts)} posts de feed</div>
-          {Number(resultado.storyPostsSkipped) > 0 && (
-            <div style={{ color: C.cinza }}>
-              ({String(resultado.storyPostsSkipped)} stories encontrados, mas ainda não sincronizados automaticamente)
-            </div>
-          )}
+          <div>✓ {String(resultado.storyPosts)} stories ativos agora</div>
+          <div>{resultado.publicoSalvo ? "✓" : "—"} snapshot de Público {resultado.publicoSalvo ? "atualizado" : "não atualizado"}</div>
           {Array.isArray(resultado.errors) && resultado.errors.length > 0 && (
             <div style={{ color: "#B3261E", marginTop: 6 }}>
               {(resultado.errors as string[]).map((e, i) => (
