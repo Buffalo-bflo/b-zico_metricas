@@ -1,0 +1,43 @@
+import { supabaseServer } from "@/lib/supabase/server";
+
+// Lista os meses (YYYY-MM) que têm pelo menos um post de feed, do mais recente pro mais antigo.
+export async function getAvailableMonths(): Promise<string[]> {
+  const supabase = supabaseServer();
+  const { data } = await supabase.from("feed_posts").select("post_date");
+  const meses = new Set((data ?? []).map((p) => p.post_date.slice(0, 7)));
+  return Array.from(meses).sort().reverse();
+}
+
+export function monthLabel(mes: string): string {
+  const [ano, mesNum] = mes.split("-");
+  const nomes = [
+    "janeiro",
+    "fevereiro",
+    "março",
+    "abril",
+    "maio",
+    "junho",
+    "julho",
+    "agosto",
+    "setembro",
+    "outubro",
+    "novembro",
+    "dezembro",
+  ];
+  return `${nomes[Number(mesNum) - 1]} de ${ano}`;
+}
+
+// Só a primeira letra maiúscula (ex: "Agosto de 2026") — não usar CSS text-transform:
+// capitalize aqui, porque isso deixaria "de" e outras palavras maiúsculas também.
+export function monthLabelCap(mes: string): string {
+  const label = monthLabel(mes);
+  return label.charAt(0).toUpperCase() + label.slice(1);
+}
+
+export function monthBounds(mes: string): { start: string; end: string } {
+  const [y, m] = mes.split("-").map(Number);
+  const start = `${y}-${String(m).padStart(2, "0")}-01`;
+  const lastDay = new Date(y, m, 0).getDate();
+  const end = `${y}-${String(m).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`;
+  return { start, end };
+}
