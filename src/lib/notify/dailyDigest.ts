@@ -1,17 +1,22 @@
 import nodemailer from "nodemailer";
 import type { SyncResult } from "@/lib/meta/sync";
 import type { BackupResult } from "@/lib/backup/githubBackup";
+import type { SecurityCheckResult } from "@/lib/security/securityCheck";
 
-// Envia o resumo diário (sincronização + backup) pelo próprio Gmail do Gustavo, usando
-// uma "senha de app" em vez da senha normal da conta — é assim que o Google permite um
-// programa mandar e-mail em nome de alguém sem expor a senha de verdade.
-export async function sendDailyDigest(sync: SyncResult, backup: BackupResult): Promise<void> {
+// Envia o resumo diário (sincronização + backup + segurança, quando roda) pelo próprio
+// Gmail do Gustavo, usando uma "senha de app" em vez da senha normal da conta — é assim
+// que o Google permite um programa mandar e-mail em nome de alguém sem expor a senha real.
+export async function sendDailyDigest(
+  sync: SyncResult,
+  backup: BackupResult,
+  security: SecurityCheckResult | null
+): Promise<void> {
   const user = process.env.GMAIL_USER;
   const pass = process.env.GMAIL_APP_PASSWORD;
   const to = process.env.ALERT_EMAIL_TO;
   if (!user || !pass || !to) return; // Ainda não configurado — não é um erro, só não envia.
 
-  const tudoCerto = sync.errors.length === 0 && backup.ok;
+  const tudoCerto = sync.errors.length === 0 && backup.ok && (!security || security.ok);
   const assunto = tudoCerto
     ? "✅ Bázico Métricas — tudo certo hoje"
     : "⚠️ Bázico Métricas — algo precisa de atenção";
@@ -25,6 +30,12 @@ export async function sendDailyDigest(sync: SyncResult, backup: BackupResult): P
     backup.ok
       ? `Backup salvo em ${backup.path}.`
       : `Backup falhou: ${backup.error}`,
+    "",
+    security
+      ? security.ok
+        ? "Checagem de segurança (a cada 2 dias): sem alertas."
+        : `Checagem de segurança (a cada 2 dias) encontrou algo:\n${security.alerts.map((a) => `  - ${a}`).join("\n")}`
+      : "Checagem de segurança: não roda hoje (a cada 2 dias).",
   ];
 
   const transporter = nodemailer.createTransport({
