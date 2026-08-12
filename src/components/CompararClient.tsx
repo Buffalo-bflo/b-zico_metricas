@@ -374,8 +374,9 @@ export function CompararClient({
                 ))}
               </div>
             </div>
-            <ResponsiveContainer width="100%" height={280}>
-              <LineChart data={chartData} margin={{ top: 5, right: 10, left: -10, bottom: 0 }}>
+            <p style={{ ...linhaStyle, marginTop: -8, marginBottom: 4 }}>Eixo horizontal: {eixoXLabel}</p>
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={chartData} margin={{ top: 5, right: 10, left: -10, bottom: 8 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke={C.linha} vertical={false} />
                 <XAxis
                   dataKey="diaOffset"
@@ -383,7 +384,6 @@ export function CompararClient({
                   axisLine={{ stroke: C.linha }}
                   tickLine={false}
                   tickFormatter={(v: number) => String(v + 1)}
-                  label={{ value: eixoXLabel, position: "insideBottom", offset: -5, fontSize: 10, fill: C.cinza }}
                 />
                 <YAxis
                   tick={{ fontSize: 10, fontFamily: "'JetBrains Mono', monospace", fill: C.cinza }}
@@ -398,7 +398,8 @@ export function CompararClient({
                   formatter={(value) => fmt(Number(value))}
                 />
                 <Legend
-                  wrapperStyle={{ fontSize: 11, fontFamily: "'Montserrat', sans-serif" }}
+                  height={28}
+                  wrapperStyle={{ fontSize: 11, fontFamily: "'Montserrat', sans-serif", paddingTop: 8 }}
                   formatter={(v: string) => labelPorStart[v] ?? v}
                 />
                 {dadosOrdenados.map((m, i) => (
