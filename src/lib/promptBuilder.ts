@@ -1,5 +1,4 @@
 import { BRAND_CONTEXT } from "@/lib/brandContext";
-import { monthLabelCap } from "@/lib/months";
 
 type PostComTag = {
   post_type: string;
@@ -10,10 +9,11 @@ type PostComTag = {
   hypothesis: string | null;
   hypothesis_status: string | null;
   origin: string | null;
+  actual_result?: string | null;
 };
 
 export function buildWeeklyPrompt({
-  mes,
+  periodoLabel,
   totalPosts,
   marcados,
   seguidoresPeriodo,
@@ -22,7 +22,7 @@ export function buildWeeklyPrompt({
   melhorHorario,
   contexto,
 }: {
-  mes: string;
+  periodoLabel: string;
   totalPosts: number;
   marcados: PostComTag[];
   seguidoresPeriodo: string;
@@ -41,7 +41,7 @@ export function buildWeeklyPrompt({
           p.editorial_line || "?"
         } · Modo: ${p.content_mode || "?"} · Hipótese: ${p.hypothesis || "sem hipótese"} (${
           p.hypothesis_status || "Observar"
-        })`
+        })${p.actual_result ? ` · Resultado real (diferente do esperado): ${p.actual_result}` : ""}`
     )
     .join("\n");
 
@@ -57,7 +57,7 @@ export function buildWeeklyPrompt({
 
   return `${BRAND_CONTEXT}
 
-DADOS DE ${monthLabelCap(mes).toUpperCase()} — conteúdo INTERNO marcado e analisado pelo analista (${internos.length} de ${totalPosts} posts do mês; ${naoMarcados} ainda sem marcação):
+DADOS DE ${periodoLabel.toUpperCase()} — conteúdo INTERNO marcado e analisado pelo analista (${internos.length} de ${totalPosts} posts do período; ${naoMarcados} ainda sem marcação):
 ${resumoInternos || "Nenhum post interno marcado ainda."}
 
 CONTEÚDO DE PARCERIA/INFLUENCER no mesmo período (gera resultado pra Bázico, mas não é entrega do analista — mantido aqui só como contexto, não descartado):

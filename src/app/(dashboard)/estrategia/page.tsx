@@ -4,7 +4,8 @@ import { EstrategiaClient } from "@/components/EstrategiaClient";
 import { RecomendacaoSection } from "@/components/RecomendacaoSection";
 import { ProjecaoSection } from "@/components/ProjecaoSection";
 import { C } from "@/lib/designTokens";
-import { monthBounds, getAvailableMonths } from "@/lib/months";
+import { resolvePeriod, type PeriodSearchParams } from "@/lib/period";
+import { fmtDate } from "@/lib/metrics";
 import { buildWeeklyPrompt } from "@/lib/promptBuilder";
 import { computeWeeklyProjection } from "@/lib/projection";
 
@@ -13,9 +14,8 @@ export const dynamic = "force-dynamic";
 export default async function EstrategiaPage({
   searchParams,
 }: {
-  searchParams: Promise<{ mes?: string }>;
+  searchParams: Promise<PeriodSearchParams>;
 }) {
-  const { mes } = await searchParams;
   const supabase = supabaseServer();
   const { data: posts, error } = await supabase
     .from("feed_posts")
@@ -42,10 +42,8 @@ export default async function EstrategiaPage({
     );
   }
 
-  const meses = await getAvailableMonths();
-  const mesSelecionado = mes && meses.includes(mes) ? mes : meses[0];
-  const doMes = posts.filter((p) => p.post_date.startsWith(mesSelecionado));
-  const { start, end } = monthBounds(mesSelecionado);
+  const period = await resolvePeriod(await searchParams);
+  const doPeriodo = posts.filter((p) => p.post_date >= period.start && p.post_date <= period.end);
 
   const { data: tagsData } = await supabase.from("post_tags").select("*");
   const tags = Object.fromEntries((tagsData ?? []).map((t) => [t.post_id, t]));
@@ -53,19 +51,23 @@ export default async function EstrategiaPage({
   const { data: seguidores } = await supabase
     .from("monthly_follower_summary")
     .select("*")
-    .eq("period_start", start)
-    .eq("period_end", end)
+    .eq("period_start", period.start)
+    .eq("period_end", period.end)
     .maybeSingle();
 
   const { data: horario } = await supabase
     .from("best_posting_time")
     .select("*")
-    .eq("period_start", start)
-    .eq("period_end", end)
+    .eq("period_start", period.start)
+    .eq("period_end", period.end)
     .eq("day_of_week", "")
     .maybeSingle();
 
-  const { data: contexto } = await supabase.from("weekly_context").select("*").eq("id", true).maybeSingle();
+  const { data: notasData } = await supabase
+    .from("context_notes")
+    .select("*")
+    .order("event_date", { ascending: true });
+  const notas = notasData ?? [];
 
   const { data: ultimaRecomendacao } = await supabase
     .from("ai_recommendations")
@@ -74,7 +76,7 @@ export default async function EstrategiaPage({
     .limit(1)
     .maybeSingle();
 
-  const marcados = doMes
+  const marcados = doPeriodo
     .filter((p) => tags[p.id])
     .map((p) => ({
       post_type: p.post_type,
@@ -85,6 +87,7 @@ export default async function EstrategiaPage({
       hypothesis: tags[p.id].hypothesis,
       hypothesis_status: tags[p.id].hypothesis_status,
       origin: tags[p.id].origin,
+      actual_result: tags[p.id].actual_result,
     }));
 
   const projecaoData = await computeWeeklyProjection();
@@ -97,31 +100,35 @@ export default async function EstrategiaPage({
     observando: todasTags.filter((t) => !t.hypothesis_status || t.hypothesis_status === "Observar").length,
   };
 
+  const contextoTexto = notas.length
+    ? notas.map((n) => `- ${fmtDate(n.event_date)}: ${n.note}`).join("\n")
+    : "";
+
   const prompt = buildWeeklyPrompt({
-    mes: mesSelecionado,
-    totalPosts: doMes.length,
+    periodoLabel: period.label,
+    totalPosts: doPeriodo.length,
     marcados,
     seguidoresPeriodo: seguidores?.period_label ?? "",
     seguidoresGanhos: seguidores?.gained ?? 0,
     seguidoresPerdidos: seguidores?.lost ?? 0,
     melhorHorario: horario?.peak_window ?? "",
-    contexto: contexto?.context_text ?? "",
+    contexto: contextoTexto,
   });
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
       <EstrategiaClient
-        posts={doMes}
+        posts={doPeriodo}
         tags={tags}
-        mesAtivo={mesSelecionado}
+        period={{ start: period.start, end: period.end, label: period.label }}
         seguidoresInicial={seguidores}
         horarioInicial={horario}
-        contextoInicial={contexto?.context_text ?? ""}
+        notasIniciais={notas}
       />
       <ProjecaoSection projecaoData={projecaoData} testesResumo={testesResumo} />
       <RecomendacaoSection
         prompt={prompt}
-        contextoAtual={contexto?.context_text ?? ""}
+        contextoAtual={contextoTexto}
         recomendacaoInicial={ultimaRecomendacao ?? null}
       />
     </div>

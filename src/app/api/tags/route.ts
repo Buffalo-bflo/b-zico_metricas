@@ -18,6 +18,7 @@ export async function POST(req: NextRequest) {
     origin,
     hypothesis,
     hypothesisStatus,
+    actualResult,
   } = body;
 
   if (!postId) {
@@ -34,6 +35,7 @@ export async function POST(req: NextRequest) {
       origin: origin || "Interno",
       hypothesis: hypothesis || null,
       hypothesis_status: hypothesisStatus || "Observar",
+      actual_result: actualResult || null,
       updated_at: new Date().toISOString(),
     },
     { onConflict: "post_id" }

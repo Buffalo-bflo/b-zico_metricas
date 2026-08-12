@@ -24,33 +24,37 @@ type Tag = {
   origin: string | null;
   hypothesis: string | null;
   hypothesis_status: string | null;
+  actual_result: string | null;
 };
 type Seguidores = { period_label: string; gained: number; lost: number } | null;
 type Horario = { peak_window: string } | null;
+type Nota = { id: string; event_date: string; note: string };
+type Periodo = { start: string; end: string; label: string };
 
 const formDraftVazio = {
   linhaEditorial: "",
   modoConteudo: "",
-  objetivo: "",
+  objetivos: [] as string[],
   origem: "Interno",
   hipotese: "",
   statusHip: "Observar",
+  resultado: "",
 };
 
 export function EstrategiaClient({
   posts,
   tags: tagsIniciais,
-  mesAtivo,
+  period,
   seguidoresInicial,
   horarioInicial,
-  contextoInicial,
+  notasIniciais,
 }: {
   posts: Post[];
   tags: Record<string, Tag>;
-  mesAtivo: string;
+  period: Periodo;
   seguidoresInicial: Seguidores;
   horarioInicial: Horario;
-  contextoInicial: string;
+  notasIniciais: Nota[];
 }) {
   const [tags, setTags] = useState(tagsIniciais);
   const [selectedPostId, setSelectedPostId] = useState("");
@@ -58,7 +62,6 @@ export function EstrategiaClient({
   const [salvandoTag, setSalvandoTag] = useState(false);
 
   const [seguidores, setSeguidores] = useState({
-    periodo: seguidoresInicial?.period_label ?? "",
     ganhos: String(seguidoresInicial?.gained ?? ""),
     perdidos: String(seguidoresInicial?.lost ?? ""),
   });
@@ -67,8 +70,10 @@ export function EstrategiaClient({
   const [melhorHorario, setMelhorHorario] = useState(horarioInicial?.peak_window ?? "");
   const [horarioSalvo, setHorarioSalvo] = useState(false);
 
-  const [contexto, setContexto] = useState(contextoInicial);
-  const [contextoSalvo, setContextoSalvo] = useState(false);
+  const [notas, setNotas] = useState(notasIniciais);
+  const [novaData, setNovaData] = useState("");
+  const [novaNota, setNovaNota] = useState("");
+  const [salvandoNota, setSalvandoNota] = useState(false);
 
   const qtdMarcados = Object.keys(tags).length;
 
@@ -80,19 +85,28 @@ export function EstrategiaClient({
         ? {
             linhaEditorial: t.editorial_line ?? "",
             modoConteudo: t.content_mode ?? "",
-            objetivo: t.engagement_objective ?? "",
+            objetivos: t.engagement_objective ? t.engagement_objective.split(", ").filter(Boolean) : [],
             origem: t.origin ?? "Interno",
             hipotese: t.hypothesis ?? "",
             statusHip: t.hypothesis_status ?? "Observar",
+            resultado: t.actual_result ?? "",
           }
         : formDraftVazio
     );
+  };
+
+  const alternarObjetivo = (o: string) => {
+    setFormDraft((f) => ({
+      ...f,
+      objetivos: f.objetivos.includes(o) ? f.objetivos.filter((x) => x !== o) : [...f.objetivos, o],
+    }));
   };
 
   const salvarTag = async () => {
     if (!selectedPostId) return;
     setSalvandoTag(true);
     try {
+      const objetivoJunto = formDraft.objetivos.join(", ");
       const res = await fetch("/api/tags", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -100,10 +114,11 @@ export function EstrategiaClient({
           postId: selectedPostId,
           editorialLine: formDraft.linhaEditorial,
           contentMode: formDraft.modoConteudo,
-          engagementObjective: formDraft.objetivo,
+          engagementObjective: objetivoJunto,
           origin: formDraft.origem,
           hypothesis: formDraft.hipotese,
           hypothesisStatus: formDraft.statusHip,
+          actualResult: formDraft.resultado,
         }),
       });
       if (res.ok) {
@@ -113,10 +128,11 @@ export function EstrategiaClient({
             post_id: selectedPostId,
             editorial_line: formDraft.linhaEditorial,
             content_mode: formDraft.modoConteudo,
-            engagement_objective: formDraft.objetivo,
+            engagement_objective: objetivoJunto,
             origin: formDraft.origem,
             hypothesis: formDraft.hipotese,
             hypothesis_status: formDraft.statusHip,
+            actual_result: formDraft.resultado,
           },
         });
         setSelectedPostId("");
@@ -130,7 +146,13 @@ export function EstrategiaClient({
     await fetch("/api/manual-metrics", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ kind: "seguidores", mesAtivo, ...seguidores }),
+      body: JSON.stringify({
+        kind: "seguidores",
+        periodStart: period.start,
+        periodEnd: period.end,
+        periodLabel: period.label,
+        ...seguidores,
+      }),
     });
     setSeguidoresSalvo(true);
     setTimeout(() => setSeguidoresSalvo(false), 2000);
@@ -140,20 +162,39 @@ export function EstrategiaClient({
     await fetch("/api/manual-metrics", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ kind: "horario", mesAtivo, melhorHorario }),
+      body: JSON.stringify({ kind: "horario", periodStart: period.start, periodEnd: period.end, melhorHorario }),
     });
     setHorarioSalvo(true);
     setTimeout(() => setHorarioSalvo(false), 2000);
   };
 
-  const salvarContexto = async () => {
+  const adicionarNota = async () => {
+    if (!novaData || !novaNota.trim()) return;
+    setSalvandoNota(true);
+    try {
+      const res = await fetch("/api/manual-metrics", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ kind: "contexto_add", data: novaData, nota: novaNota }),
+      });
+      const json = await res.json();
+      if (res.ok) {
+        setNotas([...notas, json.nota].sort((a, b) => a.event_date.localeCompare(b.event_date)));
+        setNovaData("");
+        setNovaNota("");
+      }
+    } finally {
+      setSalvandoNota(false);
+    }
+  };
+
+  const removerNota = async (id: string) => {
+    setNotas(notas.filter((n) => n.id !== id));
     await fetch("/api/manual-metrics", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ kind: "contexto", contexto }),
+      body: JSON.stringify({ kind: "contexto_remove", id }),
     });
-    setContextoSalvo(true);
-    setTimeout(() => setContextoSalvo(false), 2000);
   };
 
   const ganhos = Number(seguidores.ganhos) || 0;
@@ -199,6 +240,9 @@ export function EstrategiaClient({
                   )}
                 </div>
               ))}
+              {posts.length === 0 && (
+                <div style={{ ...labelStyle, padding: 12 }}>Nenhum post neste período.</div>
+              )}
             </div>
           </div>
 
@@ -240,21 +284,24 @@ export function EstrategiaClient({
                     ))}
                   </select>
                 </label>
-                <label style={labelStyle}>
-                  Objetivo de Engajamento
-                  <select
-                    value={formDraft.objetivo}
-                    onChange={(e) => setFormDraft({ ...formDraft, objetivo: e.target.value })}
-                    style={selectStyle}
-                  >
-                    <option value="">— selecione —</option>
+                <div style={labelStyle}>
+                  Objetivo de Engajamento (pode marcar mais de um)
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: "6px 14px", marginTop: 6 }}>
                     {OBJETIVO_OPTS.map((o) => (
-                      <option key={o} value={o}>
+                      <label
+                        key={o}
+                        style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12, color: C.preto, cursor: "pointer" }}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={formDraft.objetivos.includes(o)}
+                          onChange={() => alternarObjetivo(o)}
+                        />
                         {o}
-                      </option>
+                      </label>
                     ))}
-                  </select>
-                </label>
+                  </div>
+                </div>
                 <label style={labelStyle}>
                   Origem
                   <select
@@ -277,6 +324,16 @@ export function EstrategiaClient({
                     rows={2}
                     style={{ ...selectStyle, resize: "vertical", fontFamily: "'Montserrat', sans-serif" }}
                     placeholder="Ex: dilema real gera comentário porque força posicionamento"
+                  />
+                </label>
+                <label style={labelStyle}>
+                  Resultado real (só se foi diferente do objetivo marcado acima)
+                  <textarea
+                    value={formDraft.resultado}
+                    onChange={(e) => setFormDraft({ ...formDraft, resultado: e.target.value })}
+                    rows={2}
+                    style={{ ...selectStyle, resize: "vertical", fontFamily: "'Montserrat', sans-serif" }}
+                    placeholder="Ex: queria curtidas, o que veio mesmo foi compartilhamento"
                   />
                 </label>
                 <label style={labelStyle}>
@@ -310,18 +367,25 @@ export function EstrategiaClient({
       <div style={{ background: C.branco, border: `1px solid ${C.linha}`, borderRadius: 4, padding: 20 }}>
         <SectionTitle>Seguidores ganhos e perdidos — resumo do app</SectionTitle>
         <div style={{ ...labelStyle, marginBottom: 12 }}>
-          Vem do Meta Business Suite (desktop) → Público → Tendências, filtrando pelo período exato do mês.
+          Vem do Meta Business Suite (desktop) → Público → Tendências, filtrando pelo mesmo período mostrado
+          abaixo. O período é sempre o que está selecionado no topo da tela (Mês ou Semana) — muda de lá, não aqui.
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginBottom: 12 }}>
-          <label style={labelStyle}>
-            Período informado
-            <input
-              type="text"
-              value={seguidores.periodo}
-              onChange={(e) => setSeguidores({ ...seguidores, periodo: e.target.value })}
-              style={selectStyle}
-            />
-          </label>
+          <div>
+            <div style={labelStyle}>Período</div>
+            <div
+              style={{
+                ...selectStyle,
+                background: C.roxoTint,
+                fontFamily: "'JetBrains Mono', monospace",
+                fontWeight: 700,
+                display: "flex",
+                alignItems: "center",
+              }}
+            >
+              {period.label}
+            </div>
+          </div>
           <label style={labelStyle}>
             Seguidores ganhos (app)
             <input
@@ -380,7 +444,8 @@ export function EstrategiaClient({
       <div style={{ background: C.branco, border: `1px solid ${C.linha}`, borderRadius: 4, padding: 20 }}>
         <SectionTitle>Melhor horário para postar</SectionTitle>
         <div style={{ ...labelStyle, marginBottom: 8 }}>
-          Vem da tela &quot;Horários de atividade dos seguidores&quot;, dentro de Insights → Público, no app.
+          Vem da tela &quot;Horários de atividade dos seguidores&quot;, dentro de Insights → Público, no app —
+          referente ao período {period.label}.
         </div>
         <input
           type="text"
@@ -400,29 +465,79 @@ export function EstrategiaClient({
       </div>
 
       <div style={{ background: C.branco, border: `1px solid ${C.linha}`, borderRadius: 4, padding: 20 }}>
-        <SectionTitle>Contexto e datas importantes — próxima semana</SectionTitle>
-        <textarea
-          value={contexto}
-          onChange={(e) => setContexto(e.target.value)}
-          rows={3}
-          placeholder="Ex: 20/09 é Dia do Cliente, começar a preparar. Patches de customização já disponíveis em estoque."
-          style={{
-            width: "100%",
-            fontFamily: "'Montserrat', sans-serif",
-            fontSize: 12,
-            padding: 10,
-            border: `1px solid ${C.linha}`,
-            borderRadius: 3,
-            resize: "vertical",
-          }}
-        />
-        <div style={{ marginTop: 8, display: "flex", alignItems: "center", gap: 10 }}>
-          <button onClick={salvarContexto} className="baz-btn-secondary" style={btnSecondary}>
-            Salvar contexto
+        <SectionTitle>Contexto e datas importantes</SectionTitle>
+        <div style={{ ...labelStyle, marginBottom: 12 }}>
+          Cadastre quantas datas futuras quiser, de qualquer mês — nada aqui se apaga quando você adiciona uma
+          nova. Cada nota aparece pra IA a partir da semana em que foi cadastrada.
+        </div>
+
+        {notas.length > 0 && (
+          <div style={{ marginBottom: 16 }}>
+            {notas.map((n) => (
+              <div
+                key={n.id}
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "flex-start",
+                  gap: 10,
+                  padding: "8px 0",
+                  borderBottom: `1px solid ${C.linha}`,
+                }}
+              >
+                <div style={{ display: "flex", gap: 10 }}>
+                  <div
+                    style={{
+                      fontFamily: "'JetBrains Mono', monospace",
+                      fontSize: 11,
+                      fontWeight: 700,
+                      color: C.roxo,
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {fmtDate(n.event_date)}
+                  </div>
+                  <div style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 12, color: C.preto }}>{n.note}</div>
+                </div>
+                <button
+                  onClick={() => removerNota(n.id)}
+                  style={{ background: "transparent", border: "none", color: C.cinza, cursor: "pointer", fontSize: 12 }}
+                >
+                  remover
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "flex-end" }}>
+          <label style={labelStyle}>
+            Data
+            <input
+              type="date"
+              value={novaData}
+              onChange={(e) => setNovaData(e.target.value)}
+              style={{ ...selectStyle, width: 160 }}
+            />
+          </label>
+          <label style={{ ...labelStyle, flex: 1, minWidth: 220 }}>
+            Nota
+            <input
+              type="text"
+              value={novaNota}
+              onChange={(e) => setNovaNota(e.target.value)}
+              placeholder="Ex: Dia do Cliente, começar a preparar."
+              style={selectStyle}
+            />
+          </label>
+          <button
+            onClick={adicionarNota}
+            disabled={salvandoNota || !novaData || !novaNota.trim()}
+            className="baz-btn-primary"
+            style={{ ...btnPrimary, opacity: salvandoNota || !novaData || !novaNota.trim() ? 0.5 : 1 }}
+          >
+            Adicionar
           </button>
-          {contextoSalvo && (
-            <span style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 11, color: C.roxo }}>Salvo ✓</span>
-          )}
         </div>
       </div>
     </div>
