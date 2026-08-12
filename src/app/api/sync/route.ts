@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { runMetaSync } from "@/lib/meta/sync";
 import { backupToGithub } from "@/lib/backup/githubBackup";
+import { sendDailyDigest } from "@/lib/notify/dailyDigest";
 
 // Chamado só pelo cron da Vercel (uma vez por dia). Não passa pelo portão de senha
 // (o cron não tem cookie de sessão) — em vez disso, exige o cabeçalho Authorization
@@ -13,6 +14,7 @@ export async function GET(req: NextRequest) {
 
   const resultado = await runMetaSync();
   const backup = await backupToGithub();
+  await sendDailyDigest(resultado, backup);
 
   return NextResponse.json({ ...resultado, backup });
 }
