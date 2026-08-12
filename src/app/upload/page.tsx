@@ -2,7 +2,82 @@
 
 import { useState } from "react";
 import { SectionTitle } from "@/components/Brand";
-import { C } from "@/lib/designTokens";
+import { C, btnPrimary } from "@/lib/designTokens";
+
+function SyncCard() {
+  const [sincronizando, setSincronizando] = useState(false);
+  const [resultado, setResultado] = useState<Record<string, unknown> | null>(null);
+  const [erro, setErro] = useState("");
+
+  const sincronizar = async () => {
+    setSincronizando(true);
+    setErro("");
+    setResultado(null);
+    try {
+      const res = await fetch("/api/sync/manual", { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) {
+        setErro(data.error || "Não foi possível sincronizar.");
+      } else {
+        setResultado(data);
+      }
+    } catch {
+      setErro("Não foi possível conectar. Tenta de novo.");
+    }
+    setSincronizando(false);
+  };
+
+  return (
+    <div
+      style={{
+        background: C.roxoTint,
+        border: `1px solid ${C.roxo}33`,
+        borderRadius: 6,
+        padding: 24,
+        maxWidth: 480,
+        marginBottom: 28,
+      }}
+    >
+      <div style={{ fontSize: 13, fontWeight: 700, color: C.roxoEscuro, marginBottom: 4 }}>
+        Sincronização automática (Feed + Métricas diárias)
+      </div>
+      <div style={{ fontSize: 12, color: C.preto, marginBottom: 16 }}>
+        Puxa direto da API da Meta os últimos 10 dias de posts do Feed e métricas diárias da conta —
+        roda sozinha todo dia de madrugada. Use esse botão se quiser forçar agora, sem esperar.
+        Stories, Público e seguidores perdidos continuam pelo upload de CSV abaixo.
+      </div>
+      <button
+        onClick={sincronizar}
+        disabled={sincronizando}
+        className="baz-btn-primary"
+        style={{ ...btnPrimary, opacity: sincronizando ? 0.6 : 1, cursor: sincronizando ? "default" : "pointer" }}
+      >
+        {sincronizando ? "Sincronizando..." : "Sincronizar agora"}
+      </button>
+
+      {erro && <div style={{ color: "#B3261E", fontSize: 12, marginTop: 12 }}>{erro}</div>}
+
+      {resultado && (
+        <div style={{ marginTop: 16, fontSize: 13, color: C.preto }}>
+          <div>✓ {String(resultado.dailyMetricRows)} linhas de métricas diárias</div>
+          <div>✓ {String(resultado.feedPosts)} posts de feed</div>
+          {Number(resultado.storyPostsSkipped) > 0 && (
+            <div style={{ color: C.cinza }}>
+              ({String(resultado.storyPostsSkipped)} stories encontrados, mas ainda não sincronizados automaticamente)
+            </div>
+          )}
+          {Array.isArray(resultado.errors) && resultado.errors.length > 0 && (
+            <div style={{ color: "#B3261E", marginTop: 6 }}>
+              {(resultado.errors as string[]).map((e, i) => (
+                <div key={i}>{e}</div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
 
 function UploadCard({
   titulo,
@@ -110,6 +185,8 @@ export default function UploadPage() {
       }}
     >
       <SectionTitle>Subir CSVs do mês</SectionTitle>
+
+      <SyncCard />
 
       <UploadCard
         titulo="CSV de Conteúdo (Feed ou Stories)"
