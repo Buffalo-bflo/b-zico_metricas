@@ -59,7 +59,7 @@ export const OBJETIVO_OPTS = [
   "Curtida",
 ];
 
-export const ORIGEM_OPTS = ["Interno", "Parceria/Influencer"];
+export const ORIGEM_OPTS = ["Interno", "Parceria/Influencer", "UGC/Cliente", "Repost de terceiro"];
 export const STATUS_HIP_OPTS = ["Observar", "Confirmada", "Refutada"];
 
 export const selectStyle: CSSProperties = {
