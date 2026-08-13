@@ -102,6 +102,7 @@ export default async function EstrategiaPage({
       hypothesis_status: tags[p.id].hypothesis_status,
       origin: tags[p.id].origin,
       actual_result: tags[p.id].actual_result,
+      strategic_objective: tags[p.id].strategic_objective,
     }));
 
   const todasTags = tagsData ?? [];

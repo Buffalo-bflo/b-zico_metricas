@@ -19,6 +19,7 @@ export async function POST(req: NextRequest) {
     hypothesis,
     hypothesisStatus,
     actualResult,
+    strategicObjective,
   } = body;
 
   if (!postId) {
@@ -32,6 +33,7 @@ export async function POST(req: NextRequest) {
       editorial_line: editorialLine || null,
       content_mode: contentMode || null,
       engagement_objective: engagementObjective || null,
+      strategic_objective: strategicObjective || null,
       origin: origin || "Interno",
       hypothesis: hypothesis || null,
       hypothesis_status: hypothesisStatus || "Observar",

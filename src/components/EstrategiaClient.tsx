@@ -10,6 +10,7 @@ import {
   LINHA_EDITORIAL_OPTS,
   MODO_CONTEUDO_OPTS,
   OBJETIVO_OPTS,
+  OBJETIVO_ESTRATEGICO_OPTS,
   ORIGEM_OPTS,
   STATUS_HIP_OPTS,
 } from "@/lib/designTokens";
@@ -22,6 +23,7 @@ type Tag = {
   editorial_line: string | null;
   content_mode: string | null;
   engagement_objective: string | null;
+  strategic_objective: string | null;
   origin: string | null;
   hypothesis: string | null;
   hypothesis_status: string | null;
@@ -36,6 +38,7 @@ const formDraftVazio = {
   linhaEditorial: "",
   modoConteudo: "",
   objetivos: [] as string[],
+  objetivoEstrategico: "",
   origem: "Interno",
   hipotese: "",
   statusHip: "Observar",
@@ -87,6 +90,7 @@ export function EstrategiaClient({
             linhaEditorial: t.editorial_line ?? "",
             modoConteudo: t.content_mode ?? "",
             objetivos: t.engagement_objective ? t.engagement_objective.split(", ").filter(Boolean) : [],
+            objetivoEstrategico: t.strategic_objective ?? "",
             origem: t.origin ?? "Interno",
             hipotese: t.hypothesis ?? "",
             statusHip: t.hypothesis_status ?? "Observar",
@@ -104,7 +108,9 @@ export function EstrategiaClient({
   };
 
   const salvarTag = async () => {
-    if (!selectedPostId) return;
+    // Objetivo Estratégico é obrigatório: sem ele a IA não sabe por qual critério julgar
+    // o post, e acabaria usando régua única pra tudo.
+    if (!selectedPostId || !formDraft.objetivoEstrategico) return;
     setSalvandoTag(true);
     try {
       const objetivoJunto = formDraft.objetivos.join(", ");
@@ -116,6 +122,7 @@ export function EstrategiaClient({
           editorialLine: formDraft.linhaEditorial,
           contentMode: formDraft.modoConteudo,
           engagementObjective: objetivoJunto,
+          strategicObjective: formDraft.objetivoEstrategico,
           origin: formDraft.origem,
           hypothesis: formDraft.hipotese,
           hypothesisStatus: formDraft.statusHip,
@@ -130,6 +137,7 @@ export function EstrategiaClient({
             editorial_line: formDraft.linhaEditorial,
             content_mode: formDraft.modoConteudo,
             engagement_objective: objetivoJunto,
+            strategic_objective: formDraft.objetivoEstrategico,
             origin: formDraft.origem,
             hypothesis: formDraft.hipotese,
             hypothesis_status: formDraft.statusHip,
@@ -304,6 +312,28 @@ export function EstrategiaClient({
                   </div>
                 </div>
                 <label style={labelStyle}>
+                  Objetivo Estratégico <span style={{ color: "#B3261E" }}>*</span>
+                  <span style={{ display: "block", fontSize: 10, color: C.cinza, marginTop: 2 }}>
+                    Para QUEM o post é direcionado no funil — diferente do Objetivo de Engajamento acima, que é a
+                    ação buscada. Define por qual critério a IA vai julgar esse post.
+                  </span>
+                  <select
+                    value={formDraft.objetivoEstrategico}
+                    onChange={(e) => setFormDraft({ ...formDraft, objetivoEstrategico: e.target.value })}
+                    style={{
+                      ...selectStyle,
+                      borderColor: formDraft.objetivoEstrategico ? C.linha : "#B3261E",
+                    }}
+                  >
+                    <option value="">— selecione —</option>
+                    {OBJETIVO_ESTRATEGICO_OPTS.map((o) => (
+                      <option key={o} value={o}>
+                        {o}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label style={labelStyle}>
                   Origem
                   <select
                     value={formDraft.origem}
@@ -351,8 +381,18 @@ export function EstrategiaClient({
                     ))}
                   </select>
                 </label>
+                {!formDraft.objetivoEstrategico && (
+                  <div style={{ fontSize: 11, color: "#B3261E" }}>
+                    Escolha o Objetivo Estratégico para poder salvar.
+                  </div>
+                )}
                 <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
-                  <button onClick={salvarTag} disabled={salvandoTag} className="baz-btn-primary" style={btnPrimary}>
+                  <button
+                    onClick={salvarTag}
+                    disabled={salvandoTag || !formDraft.objetivoEstrategico}
+                    className="baz-btn-primary"
+                    style={{ ...btnPrimary, opacity: salvandoTag || !formDraft.objetivoEstrategico ? 0.5 : 1 }}
+                  >
                     {salvandoTag ? "Salvando..." : "Salvar marcação"}
                   </button>
                   <button onClick={() => setSelectedPostId("")} className="baz-btn-secondary" style={btnSecondary}>

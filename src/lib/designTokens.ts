@@ -59,6 +59,10 @@ export const OBJETIVO_OPTS = [
   "Curtida",
 ];
 
+// Para QUEM o post é direcionado dentro do funil — diferente de OBJETIVO_OPTS acima,
+// que é sobre a AÇÃO buscada. Cada um tem critério de sucesso próprio (ver GROWTH_CONTEXT).
+export const OBJETIVO_ESTRATEGICO_OPTS = ["Aquisição", "Reativação", "Fidelização", "Institucional"];
+
 export const ORIGEM_OPTS = ["Interno", "Parceria/Influencer", "UGC/Cliente", "Repost de terceiro"];
 export const STATUS_HIP_OPTS = ["Observar", "Confirmada", "Refutada"];
 

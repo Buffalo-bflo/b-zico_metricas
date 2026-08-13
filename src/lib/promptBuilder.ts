@@ -1,4 +1,4 @@
-import { BRAND_CONTEXT } from "@/lib/brandContext";
+import { BRAND_CONTEXT, GROWTH_CONTEXT } from "@/lib/brandContext";
 
 type PostComTag = {
   post_type: string;
@@ -10,6 +10,7 @@ type PostComTag = {
   hypothesis_status: string | null;
   origin: string | null;
   actual_result?: string | null;
+  strategic_objective?: string | null;
 };
 
 export function buildWeeklyPrompt({
@@ -37,11 +38,13 @@ export function buildWeeklyPrompt({
   const resumoInternos = internos
     .map(
       (p) =>
-        `- [${p.post_type}] "${p.description?.split("\n")[0].slice(0, 60)}" · Views: ${p.views} · Linha: ${
-          p.editorial_line || "?"
-        } · Modo: ${p.content_mode || "?"} · Hipótese: ${p.hypothesis || "sem hipótese"} (${
-          p.hypothesis_status || "Observar"
-        })${p.actual_result ? ` · Resultado real (diferente do esperado): ${p.actual_result}` : ""}`
+        `- [${p.post_type}] "${p.description?.split("\n")[0].slice(0, 60)}" · Views: ${p.views} · OBJETIVO ESTRATÉGICO: ${
+          p.strategic_objective || "não informado"
+        } · Linha: ${p.editorial_line || "?"} · Modo: ${p.content_mode || "?"} · Hipótese: ${
+          p.hypothesis || "sem hipótese"
+        } (${p.hypothesis_status || "Observar"})${
+          p.actual_result ? ` · Resultado real (diferente do esperado): ${p.actual_result}` : ""
+        }`
     )
     .join("\n");
 
@@ -56,6 +59,8 @@ export function buildWeeklyPrompt({
   const taxaPerda = seguidoresGanhos > 0 ? (seguidoresPerdidos / seguidoresGanhos) * 100 : 0;
 
   return `${BRAND_CONTEXT}
+
+${GROWTH_CONTEXT}
 
 DADOS DE ${periodoLabel.toUpperCase()} — conteúdo INTERNO marcado e analisado pelo analista (${internos.length} de ${totalPosts} posts do período; ${naoMarcados} ainda sem marcação):
 ${resumoInternos || "Nenhum post interno marcado ainda."}
