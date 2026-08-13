@@ -64,26 +64,38 @@ export function CompararClient({
 }) {
   const [granularidade, setGranularidade] = useState<"mes" | "semana">("mes");
 
+  // Com vários anos de histórico, mostrar todos os períodos de uma vez viraria uma
+  // parede de botões — o filtro de ano mantém a lista curta e navegável.
+  const anos = useMemo(
+    () => Array.from(new Set(meses.map((m) => m.slice(0, 4)))).sort().reverse(),
+    [meses]
+  );
+  const [anoFiltro, setAnoFiltro] = useState(anos[0] ?? "");
+
   const periodosDisponiveis: Periodo[] = useMemo(() => {
     if (granularidade === "mes") {
-      return meses.map((m) => {
-        const { start, end } = monthBounds(m);
-        return { key: start, start, end, label: monthLabelCap(m) };
-      });
+      return meses
+        .filter((m) => m.startsWith(anoFiltro))
+        .map((m) => {
+          const { start, end } = monthBounds(m);
+          return { key: start, start, end, label: monthLabelCap(m) };
+        });
     }
-    return semanas.map((s) => ({
-      key: s.start,
-      start: s.start,
-      end: s.end,
-      label: weekLabel(s.start, s.end),
-    }));
-  }, [granularidade, meses, semanas]);
+    return semanas
+      .filter((s) => s.start.startsWith(anoFiltro) || s.end.startsWith(anoFiltro))
+      .map((s) => ({
+        key: s.start,
+        start: s.start,
+        end: s.end,
+        label: weekLabel(s.start, s.end),
+      }));
+  }, [granularidade, meses, semanas, anoFiltro]);
 
   const [selecionados, setSelecionados] = useState<string[]>(() => periodosDisponiveis.slice(0, 2).map((p) => p.key));
 
   useEffect(() => {
     setSelecionados(periodosDisponiveis.slice(0, 2).map((p) => p.key));
-  }, [granularidade]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [granularidade, anoFiltro]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const [dados, setDados] = useState<MesResultado[]>([]);
   const [carregando, setCarregando] = useState(false);
@@ -181,6 +193,27 @@ export function CompararClient({
           ))}
         </div>
         <div style={{ width: 1, height: 20, background: C.linha }} />
+        <select
+          value={anoFiltro}
+          onChange={(e) => setAnoFiltro(e.target.value)}
+          style={{
+            fontFamily: "'Montserrat', sans-serif",
+            fontSize: 12,
+            fontWeight: 700,
+            padding: "6px 10px",
+            border: `1px solid ${C.preto}`,
+            borderRadius: 20,
+            color: C.preto,
+            background: C.branco,
+            cursor: "pointer",
+          }}
+        >
+          {anos.map((a) => (
+            <option key={a} value={a}>
+              {a}
+            </option>
+          ))}
+        </select>
         <span style={{ ...linhaStyle, marginRight: -8 }}>
           {granularidade === "mes" ? "Meses" : "Semanas"} (até 4):
         </span>

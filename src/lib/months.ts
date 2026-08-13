@@ -8,23 +8,30 @@ export async function getAvailableMonths(): Promise<string[]> {
   return Array.from(meses).sort().reverse();
 }
 
+export const MESES_NOMES = [
+  "janeiro",
+  "fevereiro",
+  "março",
+  "abril",
+  "maio",
+  "junho",
+  "julho",
+  "agosto",
+  "setembro",
+  "outubro",
+  "novembro",
+  "dezembro",
+];
+
 export function monthLabel(mes: string): string {
   const [ano, mesNum] = mes.split("-");
-  const nomes = [
-    "janeiro",
-    "fevereiro",
-    "março",
-    "abril",
-    "maio",
-    "junho",
-    "julho",
-    "agosto",
-    "setembro",
-    "outubro",
-    "novembro",
-    "dezembro",
-  ];
-  return `${nomes[Number(mesNum) - 1]} de ${ano}`;
+  return `${MESES_NOMES[Number(mesNum) - 1]} de ${ano}`;
+}
+
+// Só o nome do mês, sem o ano — usado quando o ano já aparece num seletor separado.
+export function monthOnlyLabel(mes: string): string {
+  const nome = MESES_NOMES[Number(mes.split("-")[1]) - 1];
+  return nome.charAt(0).toUpperCase() + nome.slice(1);
 }
 
 // Só a primeira letra maiúscula (ex: "Agosto de 2026") — não usar CSS text-transform:

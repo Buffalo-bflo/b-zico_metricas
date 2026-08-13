@@ -40,3 +40,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Progresso da importação histórica — regenerável, não precisa versionar
+scripts/.backfill-state.json

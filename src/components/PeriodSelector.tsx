@@ -2,7 +2,7 @@
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { C } from "@/lib/designTokens";
-import { monthLabelCap } from "@/lib/months";
+import { monthOnlyLabel } from "@/lib/months";
 import { getWeeksInMonth, weekLabel } from "@/lib/weeks";
 
 const selectStyle = {
@@ -25,9 +25,15 @@ export default function PeriodSelector({ months }: { months: string[] }) {
   if (months.length === 0) return null;
 
   const mesAtual = searchParams.get("mes") || months[0];
+  const anoAtual = mesAtual.slice(0, 4);
   const periodoAtual = searchParams.get("periodo") === "semana" ? "semana" : "mes";
   const semanas = getWeeksInMonth(mesAtual);
   const semanaAtual = searchParams.get("semana") || semanas[0]?.start || "";
+
+  // Com anos de histórico, uma lista única de meses fica gigante — separamos em
+  // Ano → Mês, e só então Semana (quando o modo semanal está ligado).
+  const anos = Array.from(new Set(months.map((m) => m.slice(0, 4)))).sort().reverse();
+  const mesesDoAno = months.filter((m) => m.startsWith(anoAtual));
 
   const push = (params: Record<string, string>) => {
     const sp = new URLSearchParams(searchParams.toString());
@@ -35,17 +41,14 @@ export default function PeriodSelector({ months }: { months: string[] }) {
     router.push(`${pathname}?${sp.toString()}`);
   };
 
-  const onMonthChange = (mes: string) => {
-    const novasSemanas = getWeeksInMonth(mes);
-    push({ mes, periodo: periodoAtual, semana: novasSemanas[0]?.start ?? "" });
+  const irPara = (mes: string) => {
+    push({ mes, periodo: periodoAtual, semana: getWeeksInMonth(mes)[0]?.start ?? "" });
   };
 
-  const onPeriodoChange = (periodo: "mes" | "semana") => {
-    push({ mes: mesAtual, periodo, semana: semanas[0]?.start ?? "" });
-  };
-
-  const onSemanaChange = (semana: string) => {
-    push({ mes: mesAtual, periodo: "semana", semana });
+  // Ao trocar de ano, cai no mês mais recente que existe naquele ano.
+  const onAnoChange = (ano: string) => {
+    const primeiroDoAno = months.find((m) => m.startsWith(ano));
+    if (primeiroDoAno) irPara(primeiroDoAno);
   };
 
   const toggleBtnStyle = (active: boolean) => ({
@@ -61,25 +64,43 @@ export default function PeriodSelector({ months }: { months: string[] }) {
 
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-      <select value={mesAtual} onChange={(e) => onMonthChange(e.target.value)} style={selectStyle}>
-        {months.map((m) => (
+      <select value={anoAtual} onChange={(e) => onAnoChange(e.target.value)} style={selectStyle}>
+        {anos.map((a) => (
+          <option key={a} value={a}>
+            {a}
+          </option>
+        ))}
+      </select>
+
+      <select value={mesAtual} onChange={(e) => irPara(e.target.value)} style={selectStyle}>
+        {mesesDoAno.map((m) => (
           <option key={m} value={m}>
-            {monthLabelCap(m)}
+            {monthOnlyLabel(m)}
           </option>
         ))}
       </select>
 
       <div style={{ display: "flex", border: `1px solid ${C.preto}`, borderRadius: 20, overflow: "hidden" }}>
-        <button onClick={() => onPeriodoChange("mes")} style={toggleBtnStyle(periodoAtual === "mes")}>
+        <button
+          onClick={() => push({ mes: mesAtual, periodo: "mes", semana: semanas[0]?.start ?? "" })}
+          style={toggleBtnStyle(periodoAtual === "mes")}
+        >
           Mês
         </button>
-        <button onClick={() => onPeriodoChange("semana")} style={toggleBtnStyle(periodoAtual === "semana")}>
+        <button
+          onClick={() => push({ mes: mesAtual, periodo: "semana", semana: semanas[0]?.start ?? "" })}
+          style={toggleBtnStyle(periodoAtual === "semana")}
+        >
           Semana
         </button>
       </div>
 
       {periodoAtual === "semana" && semanas.length > 0 && (
-        <select value={semanaAtual} onChange={(e) => onSemanaChange(e.target.value)} style={selectStyle}>
+        <select
+          value={semanaAtual}
+          onChange={(e) => push({ mes: mesAtual, periodo: "semana", semana: e.target.value })}
+          style={selectStyle}
+        >
           {semanas.map((s) => (
             <option key={s.start} value={s.start}>
               {weekLabel(s.start, s.end)}
