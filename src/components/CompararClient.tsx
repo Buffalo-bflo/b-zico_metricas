@@ -58,9 +58,11 @@ function DeltaBadge({ v }: { v: number | null }) {
 export function CompararClient({
   meses,
   semanas,
+  corteConfiavel,
 }: {
   meses: string[];
   semanas: { start: string; end: string }[];
+  corteConfiavel: string | null;
 }) {
   const [granularidade, setGranularidade] = useState<"mes" | "semana">("mes");
 
@@ -127,6 +129,16 @@ export function CompararClient({
   const labelPorStart = useMemo(
     () => Object.fromEntries(periodosDisponiveis.map((p) => [p.start, p.label])),
     [periodosDisponiveis]
+  );
+
+  // Períodos selecionados que caem antes do limite de 2 anos da Meta — comparar o
+  // alcance deles com um período recente produziria uma conclusão falsa.
+  const periodosNaoConfiaveis = useMemo(
+    () =>
+      periodosDisponiveis.filter(
+        (p) => selecionados.includes(p.key) && (!corteConfiavel || p.start < corteConfiavel)
+      ),
+    [periodosDisponiveis, selecionados, corteConfiavel]
   );
 
   const dadosOrdenados = useMemo(() => [...dados].sort((a, b) => a.start.localeCompare(b.start)), [dados]);
@@ -247,6 +259,28 @@ export function CompararClient({
           Semanas vão de domingo a sábado — quando uma semana cai na virada do mês (ex: 26/07 – 01/08), ela
           aparece inteira, com os dias dos dois meses somados.
         </p>
+      )}
+
+      {periodosNaoConfiaveis.length > 0 && (
+        <div
+          style={{
+            background: "#B3261E12",
+            borderLeft: "3px solid #B3261E",
+            borderRadius: 4,
+            padding: "12px 14px",
+            fontSize: 12,
+            color: C.preto,
+            lineHeight: 1.6,
+            marginBottom: 16,
+          }}
+        >
+          <b>Comparação inválida para alcance e visualizações.</b> {periodosNaoConfiaveis.length === 1 ? "O período" : "Os períodos"}{" "}
+          <b>{periodosNaoConfiaveis.map((p) => p.label).join(", ")}</b>{" "}
+          {periodosNaoConfiaveis.length === 1 ? "está" : "estão"} fora da janela de 2 anos em que a Meta guarda
+          essas métricas — os números vêm degradados, e a diferença percentual mostrada abaixo vai parecer um
+          crescimento enorme que não existiu de verdade. Curtidas, comentários, compartilhamentos e salvamentos
+          continuam comparáveis normalmente.
+        </div>
       )}
 
       {carregando && <p style={{ ...linhaStyle }}>Carregando...</p>}

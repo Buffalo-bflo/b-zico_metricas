@@ -27,11 +27,16 @@ export function sundayOf(dateStr: string): string {
 // sempre de 7 dias completos (mesmo que atravesse a virada do mês), pra comparação justa.
 export async function getAvailableWeeks(): Promise<Semana[]> {
   const supabase = supabaseServer();
-  const { data } = await supabase.from("feed_posts").select("post_date").order("post_date", { ascending: true });
-  if (!data || data.length === 0) return [];
+  // Só precisamos do primeiro e do último dia com post — duas consultas de uma linha,
+  // em vez de trazer milhares de datas só pra olhar as pontas.
+  const [{ data: maisAntigo }, { data: maisNovo }] = await Promise.all([
+    supabase.from("feed_posts").select("post_date").order("post_date", { ascending: true }).limit(1),
+    supabase.from("feed_posts").select("post_date").order("post_date", { ascending: false }).limit(1),
+  ]);
+  if (!maisAntigo?.length || !maisNovo?.length) return [];
 
-  const primeira = toSunday(new Date(data[0].post_date + "T00:00:00"));
-  const ultima = toSunday(new Date(data[data.length - 1].post_date + "T00:00:00"));
+  const primeira = toSunday(new Date(maisAntigo[0].post_date + "T00:00:00"));
+  const ultima = toSunday(new Date(maisNovo[0].post_date + "T00:00:00"));
 
   const semanas: Semana[] = [];
   const cursor = new Date(primeira);

@@ -1,5 +1,6 @@
 import { getAvailableMonths } from "@/lib/months";
 import { getAvailableWeeks } from "@/lib/weeks";
+import { avaliarQualidade } from "@/lib/dataQuality";
 import { CompararClient } from "@/components/CompararClient";
 import { SectionTitle } from "@/components/Brand";
 import { C } from "@/lib/designTokens";
@@ -7,7 +8,11 @@ import { C } from "@/lib/designTokens";
 export const dynamic = "force-dynamic";
 
 export default async function CompararPage() {
-  const [meses, semanas] = await Promise.all([getAvailableMonths(), getAvailableWeeks()]);
+  const [meses, semanas, qualidade] = await Promise.all([
+    getAvailableMonths(),
+    getAvailableWeeks(),
+    avaliarQualidade(),
+  ]);
 
   if (meses.length === 0) {
     return (
@@ -20,5 +25,5 @@ export default async function CompararPage() {
     );
   }
 
-  return <CompararClient meses={meses} semanas={semanas} />;
+  return <CompararClient meses={meses} semanas={semanas} corteConfiavel={qualidade.corte} />;
 }

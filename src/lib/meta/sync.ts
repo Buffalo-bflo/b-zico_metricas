@@ -389,6 +389,20 @@ export async function runMetaSync(diasAtras = 10): Promise<SyncResult> {
   errors.push(...feedErrors);
 
   if (feedPosts.length > 0) {
+    // A Meta degrada alcance/views de posts com mais de 2 anos, e continua devolvendo
+    // um número menor em vez de um erro. Como nosso banco guarda o valor original, nunca
+    // deixamos uma sincronização rebaixar um número que já temos — senão o próprio robô
+    // diário iria, silenciosamente, destruir o histórico com o passar do tempo.
+    const ids = feedPosts.map((p) => p.id as string);
+    const { data: existentes } = await supabase.from("feed_posts").select("id, reach, views").in("id", ids);
+    const anterior = new Map((existentes ?? []).map((p) => [p.id, p]));
+    for (const p of feedPosts) {
+      const antes = anterior.get(p.id as string);
+      if (!antes) continue;
+      p.reach = Math.max(Number(p.reach ?? 0), Number(antes.reach ?? 0));
+      p.views = Math.max(Number(p.views ?? 0), Number(antes.views ?? 0));
+    }
+
     const { error } = await supabase.from("feed_posts").upsert(feedPosts, { onConflict: "id" });
     if (error) errors.push(`Erro ao salvar posts de feed: ${error.message}`);
   }

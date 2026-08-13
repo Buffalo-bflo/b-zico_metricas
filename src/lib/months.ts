@@ -1,10 +1,21 @@
 import { supabaseServer } from "@/lib/supabase/server";
 
-// Lista os meses (YYYY-MM) que têm pelo menos um post de feed, do mais recente pro mais antigo.
+// Lista os meses (YYYY-MM) que têm pelo menos um post de feed, do mais recente pro mais
+// antigo. Precisa paginar: o Supabase corta em 1.000 linhas por consulta e, com quase
+// 2 mil posts, meses inteiros sumiriam do seletor sem nenhum aviso.
 export async function getAvailableMonths(): Promise<string[]> {
   const supabase = supabaseServer();
-  const { data } = await supabase.from("feed_posts").select("post_date");
-  const meses = new Set((data ?? []).map((p) => p.post_date.slice(0, 7)));
+  const meses = new Set<string>();
+  for (let de = 0; ; de += 1000) {
+    const { data } = await supabase
+      .from("feed_posts")
+      .select("post_date")
+      .order("post_date", { ascending: true })
+      .range(de, de + 999);
+    if (!data?.length) break;
+    for (const p of data) meses.add(p.post_date.slice(0, 7));
+    if (data.length < 1000) break;
+  }
   return Array.from(meses).sort().reverse();
 }
 

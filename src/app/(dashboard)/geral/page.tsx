@@ -5,6 +5,8 @@ import { DailyTrendChart, type DailyPoint } from "@/components/DailyTrendChart";
 import { C, TIPO_COLORS } from "@/lib/designTokens";
 import { fmt, fmtDate, median } from "@/lib/metrics";
 import { resolvePeriod, type PeriodSearchParams } from "@/lib/period";
+import { avaliarQualidade, periodoConfiavel } from "@/lib/dataQuality";
+import { AvisoQualidade } from "@/components/AvisoQualidade";
 
 export const dynamic = "force-dynamic";
 
@@ -30,7 +32,7 @@ export default async function GeralPage({
   const supabase = supabaseServer();
   const period = await resolvePeriod(await searchParams);
 
-  const [{ data, error }, { data: dailyRaw }] = await Promise.all([
+  const [{ data, error }, { data: dailyRaw }, qualidade] = await Promise.all([
     supabase
       .from("feed_posts")
       .select("id, post_type, description, post_date, views, reach, likes, comments, shares, saves, follows")
@@ -43,6 +45,7 @@ export default async function GeralPage({
       .gte("metric_date", period.start)
       .lte("metric_date", period.end)
       .order("metric_date", { ascending: true }),
+    avaliarQualidade(),
   ]);
 
   if (error) {
@@ -112,6 +115,10 @@ export default async function GeralPage({
       <p style={{ color: C.cinza, fontSize: 12, marginTop: -8, marginBottom: 20 }}>
         {period.label} · {doMes.length} posts de feed
       </p>
+
+      {!periodoConfiavel(period.start, qualidade.corte) && (
+        <AvisoQualidade corte={qualidade.corte} periodoLabel={period.label} />
+      )}
 
       {daily.length > 0 && <DailyTrendChart data={daily} />}
 

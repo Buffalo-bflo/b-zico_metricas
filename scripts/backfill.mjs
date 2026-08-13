@@ -71,7 +71,17 @@ async function backfillPosts(ano) {
   let lote = [];
   let total = 0;
   let pulados = 0;
+  let preservados = 0;
   let paramosDeVez = false;
+
+  // O que já temos salvo, pra nunca substituir um número bom por um degradado.
+  const existentes = new Map();
+  for (let de = 0; ; de += 1000) {
+    const { data } = await supabase.from("feed_posts").select("id, reach, views").range(de, de + 999);
+    if (!data?.length) break;
+    for (const p of data) existentes.set(p.id, { reach: p.reach ?? 0, views: p.views ?? 0 });
+    if (data.length < 1000) break;
+  }
 
   while (!paramosDeVez) {
     const params = { fields: "id,caption,timestamp,permalink,media_type,media_product_type", limit: "100" };
@@ -109,6 +119,20 @@ async function backfillPosts(ano) {
       // Posts muito antigos podem não ter mais insights — guardamos o post mesmo assim,
       // com zeros, pra não perder o registro de que ele existiu.
       const byName = Object.fromEntries((insights.data ?? []).map((m) => [m.name, m.values?.[0]?.value ?? 0]));
+
+      // A Meta degrada alcance/views depois de 2 anos, mas o valor bom já pode estar
+      // salvo aqui de uma importação anterior. Se o que ela devolve agora é pior do que
+      // o que temos, mantemos o nosso — nosso banco vira o arquivo histórico que a
+      // própria Meta não guarda mais. Sem isso, rodar este script de novo no futuro
+      // apagaria dados corretos.
+      const jaSalvo = existentes.get(item.id);
+      const degradou =
+        jaSalvo && ((byName.reach ?? 0) < jaSalvo.reach || (byName.views ?? 0) < jaSalvo.views);
+      if (degradou) {
+        byName.reach = Math.max(byName.reach ?? 0, jaSalvo.reach);
+        byName.views = Math.max(byName.views ?? 0, jaSalvo.views);
+        preservados++;
+      }
 
       lote.push({
         id: item.id,
@@ -151,7 +175,11 @@ async function backfillPosts(ano) {
     if (error) console.error("  erro ao salvar lote final:", error.message);
     salvarEstado();
   }
-  console.log(`  TOTAL: ${total} posts novos importados, ${pulados} já existiam.`);
+  console.log(
+    `  TOTAL: ${total} posts novos importados, ${pulados} já existiam` +
+      (preservados ? `, ${preservados} tiveram métricas preservadas (a Meta já degradou o valor original)` : "") +
+      "."
+  );
 }
 
 const TIME_SERIES = ["reach", "follower_count"];

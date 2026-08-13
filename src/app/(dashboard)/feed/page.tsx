@@ -3,6 +3,8 @@ import { SectionTitle } from "@/components/Brand";
 import { FeedTable, type FeedTableRow } from "@/components/FeedTable";
 import { C } from "@/lib/designTokens";
 import { resolvePeriod, type PeriodSearchParams } from "@/lib/period";
+import { avaliarQualidade, periodoConfiavel } from "@/lib/dataQuality";
+import { AvisoQualidade } from "@/components/AvisoQualidade";
 
 export const dynamic = "force-dynamic";
 
@@ -13,12 +15,15 @@ export default async function FeedPage({
 }) {
   const supabase = supabaseServer();
   const period = await resolvePeriod(await searchParams);
-  const { data, error } = await supabase
-    .from("feed_posts")
-    .select("id, post_type, description, post_date, views, reach, likes, comments, shares, saves, follows, paid_boost")
-    .gte("post_date", period.start)
-    .lte("post_date", period.end)
-    .order("post_date", { ascending: false });
+  const [{ data, error }, qualidade] = await Promise.all([
+    supabase
+      .from("feed_posts")
+      .select("id, post_type, description, post_date, views, reach, likes, comments, shares, saves, follows, paid_boost")
+      .gte("post_date", period.start)
+      .lte("post_date", period.end)
+      .order("post_date", { ascending: false }),
+    avaliarQualidade(),
+  ]);
 
   if (error) {
     return (
@@ -44,6 +49,9 @@ export default async function FeedPage({
 
   return (
     <div className="baz-fade-up">
+      {!periodoConfiavel(period.start, qualidade.corte) && (
+        <AvisoQualidade corte={qualidade.corte} periodoLabel={period.label} />
+      )}
       <FeedTable posts={posts} totalGeral={posts.length} />
     </div>
   );

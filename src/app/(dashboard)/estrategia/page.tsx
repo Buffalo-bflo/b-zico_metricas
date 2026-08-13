@@ -8,8 +8,10 @@ import { resolvePeriod, type PeriodSearchParams } from "@/lib/period";
 import { fmtDate } from "@/lib/metrics";
 import { buildWeeklyPrompt } from "@/lib/promptBuilder";
 import { computeWeeklyProjection } from "@/lib/projection";
-import { computeBaseline } from "@/lib/baseline";
+import { computeBaseline, type JanelaBaseline } from "@/lib/baseline";
 import { BaselineSection } from "@/components/BaselineSection";
+import { avaliarQualidade, periodoConfiavel } from "@/lib/dataQuality";
+import { AvisoQualidade } from "@/components/AvisoQualidade";
 
 export const dynamic = "force-dynamic";
 
@@ -18,8 +20,10 @@ export default async function EstrategiaPage({
 }: {
   searchParams: Promise<PeriodSearchParams>;
 }) {
+  const sp = await searchParams;
   const supabase = supabaseServer();
-  const period = await resolvePeriod(await searchParams);
+  const period = await resolvePeriod(sp);
+  const janela = ((sp as Record<string, string>).baseline ?? "12m") as JanelaBaseline;
 
   // Todas essas consultas são independentes entre si — rodam juntas em vez de uma
   // esperando a outra. Numa página com muitas consultas isso é a diferença entre
@@ -33,6 +37,7 @@ export default async function EstrategiaPage({
     { data: ultimaRecomendacao },
     projecaoData,
     baseline,
+    qualidade,
   ] = await Promise.all([
     supabase
       .from("feed_posts")
@@ -57,7 +62,8 @@ export default async function EstrategiaPage({
     supabase.from("context_notes").select("*").order("event_date", { ascending: true }),
     supabase.from("ai_recommendations").select("*").order("created_at", { ascending: false }).limit(1).maybeSingle(),
     computeWeeklyProjection(),
-    computeBaseline(),
+    computeBaseline(janela),
+    avaliarQualidade(),
   ]);
 
   if (error) {
@@ -121,8 +127,11 @@ export default async function EstrategiaPage({
     contexto: contextoTexto,
   });
 
+  const confiavel = periodoConfiavel(period.start, qualidade.corte);
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+      {!confiavel && <AvisoQualidade corte={qualidade.corte} periodoLabel={period.label} />}
       <EstrategiaClient
         posts={doPeriodo}
         tags={tags}
