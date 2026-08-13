@@ -19,10 +19,46 @@ export default async function EstrategiaPage({
   searchParams: Promise<PeriodSearchParams>;
 }) {
   const supabase = supabaseServer();
-  const { data: posts, error } = await supabase
-    .from("feed_posts")
-    .select("id, post_type, description, post_date, views")
-    .order("post_date", { ascending: true });
+  const period = await resolvePeriod(await searchParams);
+
+  // Todas essas consultas são independentes entre si — rodam juntas em vez de uma
+  // esperando a outra. Numa página com muitas consultas isso é a diferença entre
+  // "clica e espera" e "abre na hora".
+  const [
+    { data: posts, error },
+    { data: tagsData },
+    { data: seguidores },
+    { data: horario },
+    { data: notasData },
+    { data: ultimaRecomendacao },
+    projecaoData,
+    baseline,
+  ] = await Promise.all([
+    supabase
+      .from("feed_posts")
+      .select("id, post_type, description, post_date, views")
+      .gte("post_date", period.start)
+      .lte("post_date", period.end)
+      .order("post_date", { ascending: true }),
+    supabase.from("post_tags").select("*"),
+    supabase
+      .from("monthly_follower_summary")
+      .select("*")
+      .eq("period_start", period.start)
+      .eq("period_end", period.end)
+      .maybeSingle(),
+    supabase
+      .from("best_posting_time")
+      .select("*")
+      .eq("period_start", period.start)
+      .eq("period_end", period.end)
+      .eq("day_of_week", "")
+      .maybeSingle(),
+    supabase.from("context_notes").select("*").order("event_date", { ascending: true }),
+    supabase.from("ai_recommendations").select("*").order("created_at", { ascending: false }).limit(1).maybeSingle(),
+    computeWeeklyProjection(),
+    computeBaseline(),
+  ]);
 
   if (error) {
     return (
@@ -44,39 +80,9 @@ export default async function EstrategiaPage({
     );
   }
 
-  const period = await resolvePeriod(await searchParams);
-  const doPeriodo = posts.filter((p) => p.post_date >= period.start && p.post_date <= period.end);
-
-  const { data: tagsData } = await supabase.from("post_tags").select("*");
+  const doPeriodo = posts;
   const tags = Object.fromEntries((tagsData ?? []).map((t) => [t.post_id, t]));
-
-  const { data: seguidores } = await supabase
-    .from("monthly_follower_summary")
-    .select("*")
-    .eq("period_start", period.start)
-    .eq("period_end", period.end)
-    .maybeSingle();
-
-  const { data: horario } = await supabase
-    .from("best_posting_time")
-    .select("*")
-    .eq("period_start", period.start)
-    .eq("period_end", period.end)
-    .eq("day_of_week", "")
-    .maybeSingle();
-
-  const { data: notasData } = await supabase
-    .from("context_notes")
-    .select("*")
-    .order("event_date", { ascending: true });
   const notas = notasData ?? [];
-
-  const { data: ultimaRecomendacao } = await supabase
-    .from("ai_recommendations")
-    .select("*")
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
 
   const marcados = doPeriodo
     .filter((p) => tags[p.id])
@@ -91,9 +97,6 @@ export default async function EstrategiaPage({
       origin: tags[p.id].origin,
       actual_result: tags[p.id].actual_result,
     }));
-
-  const projecaoData = await computeWeeklyProjection();
-  const baseline = await computeBaseline();
 
   const todasTags = tagsData ?? [];
   const testesResumo = {

@@ -28,10 +28,22 @@ export default async function GeralPage({
   searchParams: Promise<PeriodSearchParams>;
 }) {
   const supabase = supabaseServer();
-  const { data, error } = await supabase
-    .from("feed_posts")
-    .select("id, post_type, description, post_date, views, reach, likes, comments, shares, saves, follows")
-    .order("post_date", { ascending: false });
+  const period = await resolvePeriod(await searchParams);
+
+  const [{ data, error }, { data: dailyRaw }] = await Promise.all([
+    supabase
+      .from("feed_posts")
+      .select("id, post_type, description, post_date, views, reach, likes, comments, shares, saves, follows")
+      .gte("post_date", period.start)
+      .lte("post_date", period.end)
+      .order("post_date", { ascending: false }),
+    supabase
+      .from("daily_account_metrics")
+      .select("*")
+      .gte("metric_date", period.start)
+      .lte("metric_date", period.end)
+      .order("metric_date", { ascending: true }),
+  ]);
 
   if (error) {
     return (
@@ -56,8 +68,7 @@ export default async function GeralPage({
     );
   }
 
-  const period = await resolvePeriod(await searchParams);
-  const doMes = posts.filter((p) => p.post_date >= period.start && p.post_date <= period.end);
+  const doMes = posts;
 
   const totais = doMes.reduce(
     (acc, p) => ({
@@ -84,13 +95,6 @@ export default async function GeralPage({
   const ordenadoPorViews = [...doMes].sort((a, b) => b.views - a.views);
   const melhor = ordenadoPorViews[0];
   const pior = ordenadoPorViews[ordenadoPorViews.length - 1];
-
-  const { data: dailyRaw } = await supabase
-    .from("daily_account_metrics")
-    .select("*")
-    .gte("metric_date", period.start)
-    .lte("metric_date", period.end)
-    .order("metric_date", { ascending: true });
 
   const dailyMap = new Map<string, DailyPoint>();
   for (const row of dailyRaw ?? []) {

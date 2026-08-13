@@ -27,9 +27,12 @@ export default async function StoriesPage({
   searchParams: Promise<PeriodSearchParams>;
 }) {
   const supabase = supabaseServer();
+  const period = await resolvePeriod(await searchParams);
   const { data, error } = await supabase
     .from("story_posts")
     .select("id, description, media_type, published_at, post_date, views, reach, link_clicks, replies, follows")
+    .gte("post_date", period.start)
+    .lte("post_date", period.end)
     .order("post_date", { ascending: false });
 
   if (error) {
@@ -54,8 +57,7 @@ export default async function StoriesPage({
     );
   }
 
-  const period = await resolvePeriod(await searchParams);
-  const doMes = stories.filter((s) => s.post_date >= period.start && s.post_date <= period.end);
+  const doMes = stories;
 
   const stats = {
     medianaViews: median(doMes.map((s) => s.views)),

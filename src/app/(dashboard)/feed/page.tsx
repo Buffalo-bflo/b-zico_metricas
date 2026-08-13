@@ -12,9 +12,12 @@ export default async function FeedPage({
   searchParams: Promise<PeriodSearchParams>;
 }) {
   const supabase = supabaseServer();
+  const period = await resolvePeriod(await searchParams);
   const { data, error } = await supabase
     .from("feed_posts")
     .select("id, post_type, description, post_date, views, reach, likes, comments, shares, saves, follows, paid_boost")
+    .gte("post_date", period.start)
+    .lte("post_date", period.end)
     .order("post_date", { ascending: false });
 
   if (error) {
@@ -39,12 +42,9 @@ export default async function FeedPage({
     );
   }
 
-  const period = await resolvePeriod(await searchParams);
-  const doMes = posts.filter((p) => p.post_date >= period.start && p.post_date <= period.end);
-
   return (
     <div className="baz-fade-up">
-      <FeedTable posts={doMes} totalGeral={doMes.length} />
+      <FeedTable posts={posts} totalGeral={posts.length} />
     </div>
   );
 }
