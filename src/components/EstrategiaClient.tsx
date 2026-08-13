@@ -14,6 +14,7 @@ import {
   STATUS_HIP_OPTS,
 } from "@/lib/designTokens";
 import { fmtDate } from "@/lib/metrics";
+import { YearCalendar } from "@/components/YearCalendar";
 
 type Post = { id: string; post_type: string; description: string; post_date: string };
 type Tag = {
@@ -468,7 +469,12 @@ export function EstrategiaClient({
         <SectionTitle>Contexto e datas importantes</SectionTitle>
         <div style={{ ...labelStyle, marginBottom: 12 }}>
           Cadastre quantas datas futuras quiser, de qualquer mês — nada aqui se apaga quando você adiciona uma
-          nova. Cada nota aparece pra IA a partir da semana em que foi cadastrada.
+          nova. Cada nota aparece pra IA a partir da semana em que foi cadastrada. Clica num dia do calendário
+          pra já preencher a data de uma nota nova.
+        </div>
+
+        <div style={{ marginBottom: 20 }}>
+          <YearCalendar notas={notas} onDayClick={(iso) => setNovaData(iso)} />
         </div>
 
         {notas.length > 0 && (

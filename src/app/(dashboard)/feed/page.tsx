@@ -14,7 +14,7 @@ export default async function FeedPage({
   const supabase = supabaseServer();
   const { data, error } = await supabase
     .from("feed_posts")
-    .select("id, post_type, description, post_date, views, reach, likes, comments, shares, saves, follows")
+    .select("id, post_type, description, post_date, views, reach, likes, comments, shares, saves, follows, paid_boost")
     .order("post_date", { ascending: false });
 
   if (error) {

@@ -8,6 +8,8 @@ import { resolvePeriod, type PeriodSearchParams } from "@/lib/period";
 import { fmtDate } from "@/lib/metrics";
 import { buildWeeklyPrompt } from "@/lib/promptBuilder";
 import { computeWeeklyProjection } from "@/lib/projection";
+import { computeBaseline } from "@/lib/baseline";
+import { BaselineSection } from "@/components/BaselineSection";
 
 export const dynamic = "force-dynamic";
 
@@ -91,6 +93,7 @@ export default async function EstrategiaPage({
     }));
 
   const projecaoData = await computeWeeklyProjection();
+  const baseline = await computeBaseline();
 
   const todasTags = tagsData ?? [];
   const testesResumo = {
@@ -125,6 +128,7 @@ export default async function EstrategiaPage({
         horarioInicial={horario}
         notasIniciais={notas}
       />
+      <BaselineSection baseline={baseline} />
       <ProjecaoSection projecaoData={projecaoData} testesResumo={testesResumo} />
       <RecomendacaoSection
         prompt={prompt}

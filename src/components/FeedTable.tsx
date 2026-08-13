@@ -17,6 +17,7 @@ export type FeedTableRow = {
   shares: number;
   saves: number;
   follows: number;
+  paid_boost: boolean;
 };
 
 const ORDENAR_OPTS: { key: keyof FeedTableRow; label: string }[] = [
@@ -27,9 +28,20 @@ const ORDENAR_OPTS: { key: keyof FeedTableRow; label: string }[] = [
   { key: "saves", label: "Ordenar: Salvamentos" },
 ];
 
-export function FeedTable({ posts, totalGeral }: { posts: FeedTableRow[]; totalGeral: number }) {
+export function FeedTable({ posts: postsIniciais, totalGeral }: { posts: FeedTableRow[]; totalGeral: number }) {
+  const [posts, setPosts] = useState(postsIniciais);
   const [tipoFiltro, setTipoFiltro] = useState("Todos");
   const [ordenarPor, setOrdenarPor] = useState<keyof FeedTableRow>("views");
+
+  const alternarImpulsionado = async (postId: string, valorAtual: boolean) => {
+    const novoValor = !valorAtual;
+    setPosts((ps) => ps.map((p) => (p.id === postId ? { ...p, paid_boost: novoValor } : p)));
+    await fetch("/api/feed-flags", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ postId, paidBoost: novoValor }),
+    });
+  };
 
   const filtrado = useMemo(() => {
     const arr = tipoFiltro === "Todos" ? posts : posts.filter((p) => p.post_type === tipoFiltro);
@@ -101,7 +113,7 @@ export function FeedTable({ posts, totalGeral }: { posts: FeedTableRow[]; totalG
         <table>
           <thead>
             <tr style={{ borderBottom: `2px solid ${C.preto}` }}>
-              {["Data", "Tipo", "Descrição", "Views", "Alcance", "Curtidas", "Coment.", "Compart.", "Salvos", "+Seg."].map(
+              {["Data", "Tipo", "Descrição", "Views", "Alcance", "Curtidas", "Coment.", "Compart.", "Salvos", "+Seg.", "Impuls.?"].map(
                 (h) => (
                   <th
                     key={h}
@@ -194,6 +206,14 @@ export function FeedTable({ posts, totalGeral }: { posts: FeedTableRow[]; totalG
                 </td>
                 <td style={{ padding: "9px 10px", textAlign: "right", fontFamily: "'JetBrains Mono', monospace", fontSize: 12, color: C.roxo }}>
                   {p.follows > 0 ? `+${p.follows}` : "—"}
+                </td>
+                <td style={{ padding: "9px 10px", textAlign: "right" }}>
+                  <input
+                    type="checkbox"
+                    checked={p.paid_boost}
+                    onChange={() => alternarImpulsionado(p.id, p.paid_boost)}
+                    title="Marcar se esse post teve tráfego pago/impulsionamento — exclui ele da média de referência orgânica"
+                  />
                 </td>
               </tr>
             ))}
