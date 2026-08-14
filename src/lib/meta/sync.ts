@@ -126,70 +126,78 @@ async function syncFeedMedia(
   let after: string | undefined;
   let done = false;
 
-  while (!done) {
-    const params: Record<string, string> = {
-      fields: "id,caption,timestamp,permalink,media_type,media_product_type",
-      limit: "25",
-    };
-    if (after) params.after = after;
+  // Protege a função inteira: se a Meta recusar a chamada (token revogado, permissão
+  // retirada, app bloqueado etc.), o erro vira um item em `errors` em vez de derrubar
+  // toda a sincronização — as métricas diárias, Stories e Público continuam rodando
+  // normalmente mesmo que só o Feed esteja com problema.
+  try {
+    while (!done) {
+      const params: Record<string, string> = {
+        fields: "id,caption,timestamp,permalink,media_type,media_product_type",
+        limit: "25",
+      };
+      if (after) params.after = after;
 
-    const page = await graphGet<{ data: MediaItem[]; paging?: { cursors?: { after?: string } } }>(
-      `${igUserId}/media`,
-      params,
-      token
-    );
+      const page = await graphGet<{ data: MediaItem[]; paging?: { cursors?: { after?: string } } }>(
+        `${igUserId}/media`,
+        params,
+        token
+      );
 
-    for (const item of page.data ?? []) {
-      if (item.media_product_type === "STORY") continue; // Stories vêm de /stories, não de /media
-      const postDate = item.timestamp.slice(0, 10);
-      if (postDate < sinceIso) {
-        done = true;
-        break;
+      for (const item of page.data ?? []) {
+        if (item.media_product_type === "STORY") continue; // Stories vêm de /stories, não de /media
+        const postDate = item.timestamp.slice(0, 10);
+        if (postDate < sinceIso) {
+          done = true;
+          break;
+        }
+
+        const tipo = mapPostType(item);
+        if (tipo === null) continue;
+
+        try {
+          const metricsList =
+            tipo === "Reels"
+              ? "reach,views,likes,comments,shares,saved"
+              : "reach,views,likes,comments,shares,saved,follows";
+          const insights = await graphGet<{ data: { name: string; values: { value: number }[] }[] }>(
+            `${item.id}/insights`,
+            { metric: metricsList },
+            token
+          );
+          const byName = Object.fromEntries(
+            (insights.data ?? []).map((m) => [m.name, m.values?.[0]?.value ?? 0])
+          );
+
+          feedPosts.push({
+            id: item.id,
+            account_username: "sejabazico",
+            post_type: tipo,
+            raw_post_type: item.media_product_type,
+            description: item.caption ?? "",
+            permalink: item.permalink ?? "",
+            published_at: item.timestamp,
+            post_date: postDate,
+            duration_seconds: null,
+            views: byName.views ?? 0,
+            reach: byName.reach ?? 0,
+            likes: byName.likes ?? 0,
+            shares: byName.shares ?? 0,
+            follows: byName.follows ?? 0,
+            comments: byName.comments ?? 0,
+            saves: byName.saved ?? 0,
+            source_file: "sync-api",
+          });
+        } catch (e) {
+          errors.push(`Post ${item.id}: ${e instanceof Error ? e.message : String(e)}`);
+        }
       }
 
-      const tipo = mapPostType(item);
-      if (tipo === null) continue;
-
-      try {
-        const metricsList =
-          tipo === "Reels"
-            ? "reach,views,likes,comments,shares,saved"
-            : "reach,views,likes,comments,shares,saved,follows";
-        const insights = await graphGet<{ data: { name: string; values: { value: number }[] }[] }>(
-          `${item.id}/insights`,
-          { metric: metricsList },
-          token
-        );
-        const byName = Object.fromEntries(
-          (insights.data ?? []).map((m) => [m.name, m.values?.[0]?.value ?? 0])
-        );
-
-        feedPosts.push({
-          id: item.id,
-          account_username: "sejabazico",
-          post_type: tipo,
-          raw_post_type: item.media_product_type,
-          description: item.caption ?? "",
-          permalink: item.permalink ?? "",
-          published_at: item.timestamp,
-          post_date: postDate,
-          duration_seconds: null,
-          views: byName.views ?? 0,
-          reach: byName.reach ?? 0,
-          likes: byName.likes ?? 0,
-          shares: byName.shares ?? 0,
-          follows: byName.follows ?? 0,
-          comments: byName.comments ?? 0,
-          saves: byName.saved ?? 0,
-          source_file: "sync-api",
-        });
-      } catch (e) {
-        errors.push(`Post ${item.id}: ${e instanceof Error ? e.message : String(e)}`);
-      }
+      after = page.paging?.cursors?.after;
+      if (!after) done = true;
     }
-
-    after = page.paging?.cursors?.after;
-    if (!after) done = true;
+  } catch (e) {
+    errors.push(`Lista de posts do feed: ${e instanceof Error ? e.message : String(e)}`);
   }
 
   return { feedPosts, errors };

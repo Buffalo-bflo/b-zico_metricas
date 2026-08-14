@@ -11,7 +11,8 @@ const TABLES = [
   "best_posting_time",
   "post_tags",
   "ai_recommendations",
-  "weekly_context",
+  "context_notes",
+  "testes",
 ];
 
 export type BackupResult = { ok: boolean; path?: string; error?: string };
@@ -30,9 +31,16 @@ export async function backupToGithub(): Promise<BackupResult> {
   const supabase = supabaseServer();
   const dump: Record<string, unknown> = {};
   for (const table of TABLES) {
-    const { data, error } = await supabase.from(table).select("*");
-    if (error) return { ok: false, error: `Erro ao ler ${table}: ${error.message}` };
-    dump[table] = data;
+    // O Supabase corta em 1.000 linhas por consulta — sem paginar, feed_posts (1.9 mil
+    // linhas) seria salvo pela metade sem nenhum aviso, e o backup pareceria bom.
+    const linhas: Record<string, unknown>[] = [];
+    for (let de = 0; ; de += 1000) {
+      const { data, error } = await supabase.from(table).select("*").range(de, de + 999);
+      if (error) return { ok: false, error: `Erro ao ler ${table}: ${error.message}` };
+      linhas.push(...(data ?? []));
+      if (!data || data.length < 1000) break;
+    }
+    dump[table] = linhas;
   }
 
   const hoje = new Date().toISOString().slice(0, 10);
