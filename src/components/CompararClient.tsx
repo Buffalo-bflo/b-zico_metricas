@@ -55,6 +55,123 @@ function DeltaBadge({ v }: { v: number | null }) {
   );
 }
 
+const seletorStyle = {
+  fontFamily: "'Montserrat', sans-serif",
+  fontSize: 12,
+  padding: "6px 10px",
+  border: `1px solid ${C.linha}`,
+  borderRadius: 20,
+  color: C.preto,
+  background: C.branco,
+  cursor: "pointer",
+} as const;
+
+// Um período por vez, escolhido em Ano → Mês (→ Semana, se for o caso) — em vez de uma
+// grade única com todas as semanas do ano marcáveis, que virava uma parede de botões
+// assim que o histórico passou a ter vários anos.
+function SlotPicker({
+  meses,
+  semanas,
+  granularidade,
+  jaAdicionados,
+  onAdd,
+}: {
+  meses: string[];
+  semanas: { start: string; end: string }[];
+  granularidade: "mes" | "semana";
+  jaAdicionados: string[];
+  onAdd: (p: Periodo) => void;
+}) {
+  const anos = useMemo(() => Array.from(new Set(meses.map((m) => m.slice(0, 4)))).sort().reverse(), [meses]);
+  const [ano, setAno] = useState(anos[0] ?? "");
+  const mesesDoAno = useMemo(() => meses.filter((m) => m.startsWith(ano)), [meses, ano]);
+  const [mes, setMes] = useState(mesesDoAno[0] ?? "");
+  const semanasDoMes = useMemo(
+    () => semanas.filter((s) => s.start.slice(0, 7) === mes || s.end.slice(0, 7) === mes),
+    [semanas, mes]
+  );
+  const [semanaStart, setSemanaStart] = useState(semanasDoMes[0]?.start ?? "");
+
+  const onAnoChange = (novoAno: string) => {
+    setAno(novoAno);
+    const primeiroMes = meses.find((m) => m.startsWith(novoAno)) ?? "";
+    setMes(primeiroMes);
+    const sems = semanas.filter((s) => s.start.slice(0, 7) === primeiroMes || s.end.slice(0, 7) === primeiroMes);
+    setSemanaStart(sems[0]?.start ?? "");
+  };
+
+  const onMesChange = (novoMes: string) => {
+    setMes(novoMes);
+    const sems = semanas.filter((s) => s.start.slice(0, 7) === novoMes || s.end.slice(0, 7) === novoMes);
+    setSemanaStart(sems[0]?.start ?? "");
+  };
+
+  const periodo: Periodo | null = useMemo(() => {
+    if (!mes) return null;
+    if (granularidade === "mes") {
+      const { start, end } = monthBounds(mes);
+      return { key: start, start, end, label: monthLabelCap(mes) };
+    }
+    const semana = semanasDoMes.find((s) => s.start === semanaStart);
+    if (!semana) return null;
+    return { key: semana.start, start: semana.start, end: semana.end, label: weekLabel(semana.start, semana.end) };
+  }, [mes, semanaStart, granularidade, semanasDoMes]);
+
+  const duplicado = !!periodo && jaAdicionados.includes(periodo.key);
+
+  return (
+    <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+      <select value={ano} onChange={(e) => onAnoChange(e.target.value)} className="baz-touch-target" style={seletorStyle}>
+        {anos.map((a) => (
+          <option key={a} value={a}>
+            {a}
+          </option>
+        ))}
+      </select>
+      <select value={mes} onChange={(e) => onMesChange(e.target.value)} className="baz-touch-target" style={seletorStyle}>
+        {mesesDoAno.map((m) => (
+          <option key={m} value={m}>
+            {monthOnlyLabel(m)}
+          </option>
+        ))}
+      </select>
+      {granularidade === "semana" && (
+        <select
+          value={semanaStart}
+          onChange={(e) => setSemanaStart(e.target.value)}
+          className="baz-touch-target"
+          style={seletorStyle}
+        >
+          {semanasDoMes.map((s) => (
+            <option key={s.start} value={s.start}>
+              {weekLabel(s.start, s.end)}
+            </option>
+          ))}
+        </select>
+      )}
+      <button
+        onClick={() => periodo && onAdd(periodo)}
+        disabled={!periodo || duplicado}
+        className="baz-touch-target baz-btn-primary"
+        title={duplicado ? "Esse período já está na comparação" : undefined}
+        style={{
+          fontFamily: "'Montserrat', sans-serif",
+          fontSize: 12,
+          fontWeight: 700,
+          padding: "6px 14px",
+          background: !periodo || duplicado ? C.linha : C.preto,
+          color: !periodo || duplicado ? C.cinza : C.branco,
+          border: "none",
+          borderRadius: 20,
+          cursor: !periodo || duplicado ? "not-allowed" : "pointer",
+        }}
+      >
+        {duplicado ? "Já adicionado" : "+ Adicionar período"}
+      </button>
+    </div>
+  );
+}
+
 export function CompararClient({
   meses,
   semanas,
@@ -65,45 +182,14 @@ export function CompararClient({
   corteConfiavel: string | null;
 }) {
   const [granularidade, setGranularidade] = useState<"mes" | "semana">("mes");
+  const [resolvidos, setResolvidos] = useState<Periodo[]>([]);
 
-  // Com vários anos de histórico, mostrar todos os períodos de uma vez viraria uma
-  // parede de botões — o filtro de ano mantém a lista curta e navegável.
-  const anos = useMemo(
-    () => Array.from(new Set(meses.map((m) => m.slice(0, 4)))).sort().reverse(),
-    [meses]
-  );
-  const [anoFiltro, setAnoFiltro] = useState(anos[0] ?? "");
-
-  const periodosDisponiveis: Periodo[] = useMemo(() => {
-    if (granularidade === "mes") {
-      return meses
-        .filter((m) => m.startsWith(anoFiltro))
-        .map((m) => {
-          const { start, end } = monthBounds(m);
-          return { key: start, start, end, label: monthLabelCap(m) };
-        });
-    }
-    return semanas
-      .filter((s) => s.start.startsWith(anoFiltro) || s.end.startsWith(anoFiltro))
-      .map((s) => ({
-        key: s.start,
-        start: s.start,
-        end: s.end,
-        label: weekLabel(s.start, s.end),
-      }));
-  }, [granularidade, meses, semanas, anoFiltro]);
-
-  const [selecionados, setSelecionados] = useState<string[]>(() => periodosDisponiveis.slice(0, 2).map((p) => p.key));
-
-  // Reseta a seleção pros 2 primeiros períodos quando o usuário troca de granularidade
-  // ou de ano — ajustado durante o render (padrão recomendado pelo React pra "resetar
-  // estado quando uma prop muda"), em vez de um useEffect, pra não disparar uma
-  // renderização extra nem depender de listas de dependência incompletas de propósito.
-  const [chaveSelecaoAnterior, setChaveSelecaoAnterior] = useState(`${granularidade}|${anoFiltro}`);
-  const chaveSelecaoAtual = `${granularidade}|${anoFiltro}`;
-  if (chaveSelecaoAtual !== chaveSelecaoAnterior) {
-    setChaveSelecaoAnterior(chaveSelecaoAtual);
-    setSelecionados(periodosDisponiveis.slice(0, 2).map((p) => p.key));
+  // Trocar de mês pra semana (ou vice-versa) esvazia a seleção — misturar as duas não faz
+  // sentido pro gráfico (o eixo é "dia do mês" numa e "dia da semana" na outra).
+  const [granularidadeAnterior, setGranularidadeAnterior] = useState(granularidade);
+  if (granularidade !== granularidadeAnterior) {
+    setGranularidadeAnterior(granularidade);
+    setResolvidos([]);
   }
 
   const [dados, setDados] = useState<MesResultado[]>([]);
@@ -111,104 +197,44 @@ export function CompararClient({
   const [metricaChart, setMetricaChart] = useState("alcance");
 
   useEffect(() => {
-    if (selecionados.length === 0) return;
-    const periodosSelecionados = periodosDisponiveis.filter((p) => selecionados.includes(p.key));
-    if (periodosSelecionados.length === 0) return;
+    if (resolvidos.length === 0) return;
     // Ligar o "carregando" antes da busca é o mesmo padrão do exemplo oficial do React
     // pra buscar dado num efeito (react.dev/learn/you-might-not-need-an-effect#fetching-data)
     // — não é o caso de "estado derivado de prop" que essa regra existe pra evitar.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setCarregando(true);
-    const query = periodosSelecionados.map((p) => `${p.start}:${p.end}`).join(",");
+    const query = resolvidos.map((p) => `${p.start}:${p.end}`).join(",");
     fetch(`/api/compare?periods=${query}`)
       .then((r) => r.json())
       .then((d) => setDados(d.resultado ?? []))
       .finally(() => setCarregando(false));
-  }, [selecionados, periodosDisponiveis]);
+  }, [resolvidos]);
 
-  const toggleKey = (key: string) => {
-    setSelecionados((prev) => {
-      if (prev.includes(key)) return prev.filter((k) => k !== key);
-      if (prev.length >= 4) return prev;
-      return [...prev, key].sort();
-    });
+  const adicionarPeriodo = (p: Periodo) => {
+    setResolvidos((prev) => (prev.some((x) => x.key === p.key) ? prev : [...prev, p]));
   };
-
-  const podeAdicionar = selecionados.length < 4;
-
-  // Semanas de um ano inteiro somadas viram uma parede de botões — agrupar por mês
-  // (com o nome do mês servindo de âncora visual) deixa a lista escaneável em vez de
-  // uma grade solta sem estrutura.
-  const semanasPorMes = useMemo(() => {
-    const grupos = new Map<string, Periodo[]>();
-    for (const p of periodosDisponiveis) {
-      const mesKey = p.start.slice(0, 7);
-      const lista = grupos.get(mesKey) ?? [];
-      lista.push(p);
-      grupos.set(mesKey, lista);
-    }
-    return Array.from(grupos.entries()).map(([mes, periodos]) => ({ mes, periodos }));
-  }, [periodosDisponiveis]);
-
-  const rotuloStyle = {
-    fontFamily: "'Montserrat', sans-serif",
-    fontSize: 11,
-    fontWeight: 700 as const,
-    letterSpacing: "0.05em",
-    textTransform: "uppercase" as const,
-    color: C.cinza,
+  const removerPeriodo = (key: string) => {
+    setResolvidos((prev) => prev.filter((p) => p.key !== key));
   };
-
-  function renderPill(p: Periodo) {
-    const ativo = selecionados.includes(p.key);
-    const desabilitado = !ativo && !podeAdicionar;
-    return (
-      <button
-        key={p.key}
-        onClick={() => toggleKey(p.key)}
-        className="baz-touch-target"
-        disabled={desabilitado}
-        title={desabilitado ? "Já tem 4 períodos selecionados — desmarque um pra trocar" : undefined}
-        style={{
-          fontFamily: "'Montserrat', sans-serif",
-          fontSize: 12,
-          fontWeight: ativo ? 700 : 400,
-          padding: "6px 12px",
-          background: ativo ? C.preto : "transparent",
-          color: ativo ? C.branco : desabilitado ? C.cinza : C.preto,
-          border: `1px solid ${ativo ? C.preto : C.linha}`,
-          borderRadius: 20,
-          cursor: desabilitado ? "not-allowed" : "pointer",
-          opacity: desabilitado ? 0.55 : 1,
-          whiteSpace: "nowrap",
-        }}
-      >
-        {p.label}
-      </button>
-    );
-  }
 
   const labelPorStart = useMemo(
-    () => Object.fromEntries(periodosDisponiveis.map((p) => [p.start, p.label])),
-    [periodosDisponiveis]
+    () => Object.fromEntries(resolvidos.map((p) => [p.start, p.label])),
+    [resolvidos]
   );
 
   // Períodos selecionados que caem antes do limite de 2 anos da Meta — comparar o
   // alcance deles com um período recente produziria uma conclusão falsa.
   const periodosNaoConfiaveis = useMemo(
-    () =>
-      periodosDisponiveis.filter(
-        (p) => selecionados.includes(p.key) && (!corteConfiavel || p.start < corteConfiavel)
-      ),
-    [periodosDisponiveis, selecionados, corteConfiavel]
+    () => resolvidos.filter((p) => !corteConfiavel || p.start < corteConfiavel),
+    [resolvidos, corteConfiavel]
   );
 
   // Quando a seleção fica vazia, o efeito acima não busca nada — mas os dados do
   // pedido anterior continuam em `dados` até uma nova busca. Ignorar aqui evita
   // mostrar resultado de uma seleção que o usuário já desmarcou.
   const dadosOrdenados = useMemo(
-    () => (selecionados.length === 0 ? [] : [...dados].sort((a, b) => a.start.localeCompare(b.start))),
-    [dados, selecionados]
+    () => (resolvidos.length === 0 ? [] : [...dados].sort((a, b) => a.start.localeCompare(b.start))),
+    [dados, resolvidos]
   );
 
   const chartData = useMemo(() => {
@@ -247,72 +273,77 @@ export function CompararClient({
           marginBottom: 20,
         }}
       >
-        <div style={{ display: "flex", gap: 16, flexWrap: "wrap", alignItems: "center" }}>
-          <div style={{ display: "flex", gap: 4 }}>
-            {(["mes", "semana"] as const).map((g) => (
-              <button
-                key={g}
-                onClick={() => setGranularidade(g)}
-                className="baz-touch-target"
-                style={{
-                  fontFamily: "'Montserrat', sans-serif",
-                  fontSize: 12,
-                  fontWeight: granularidade === g ? 700 : 400,
-                  padding: "6px 14px",
-                  background: granularidade === g ? C.roxo : "transparent",
-                  color: granularidade === g ? C.branco : C.preto,
-                  border: `1px solid ${C.roxo}`,
-                  borderRadius: 20,
-                  cursor: "pointer",
-                }}
-              >
-                {g === "mes" ? "Por mês" : "Por semana"}
-              </button>
-            ))}
-          </div>
-          <div style={{ width: 1, height: 20, background: C.linha }} />
-          <select
-            value={anoFiltro}
-            onChange={(e) => setAnoFiltro(e.target.value)}
-            className="baz-touch-target"
-            style={{
-              fontFamily: "'Montserrat', sans-serif",
-              fontSize: 12,
-              fontWeight: 700,
-              padding: "6px 10px",
-              border: `1px solid ${C.preto}`,
-              borderRadius: 20,
-              color: C.preto,
-              background: C.branco,
-              cursor: "pointer",
-            }}
-          >
-            {anos.map((a) => (
-              <option key={a} value={a}>
-                {a}
-              </option>
-            ))}
-          </select>
+        <div style={{ display: "flex", gap: 4 }}>
+          {(["mes", "semana"] as const).map((g) => (
+            <button
+              key={g}
+              onClick={() => setGranularidade(g)}
+              className="baz-touch-target"
+              style={{
+                fontFamily: "'Montserrat', sans-serif",
+                fontSize: 12,
+                fontWeight: granularidade === g ? 700 : 400,
+                padding: "6px 14px",
+                background: granularidade === g ? C.roxo : "transparent",
+                color: granularidade === g ? C.branco : C.preto,
+                border: `1px solid ${C.roxo}`,
+                borderRadius: 20,
+                cursor: "pointer",
+              }}
+            >
+              {g === "mes" ? "Por mês" : "Por semana"}
+            </button>
+          ))}
         </div>
 
-        <div style={{ marginTop: 14, paddingTop: 14, borderTop: `1px solid ${C.linha}` }}>
-          <span style={{ ...rotuloStyle, display: "block", marginBottom: 10 }}>
-            {granularidade === "mes" ? "Meses" : "Semanas"} (até 4)
-          </span>
-
-          {granularidade === "mes" ? (
-            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>{periodosDisponiveis.map(renderPill)}</div>
-          ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              {semanasPorMes.map(({ mes, periodos }) => (
-                <div key={mes} style={{ display: "flex", gap: 10, alignItems: "flex-start", flexWrap: "wrap" }}>
-                  <span style={{ ...rotuloStyle, minWidth: 72, flexShrink: 0, paddingTop: 6 }}>
-                    {monthOnlyLabel(mes)}
-                  </span>
-                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap", flex: 1 }}>{periodos.map(renderPill)}</div>
-                </div>
-              ))}
+        <div style={{ marginTop: 14, paddingTop: 14, borderTop: `1px solid ${C.linha}`, display: "flex", flexDirection: "column", gap: 10 }}>
+          {resolvidos.map((p, i) => (
+            <div
+              key={p.key}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 10,
+                padding: "8px 12px",
+                background: C.roxoTint,
+                borderRadius: 6,
+                width: "fit-content",
+              }}
+            >
+              <span
+                style={{
+                  fontFamily: "'JetBrains Mono', monospace",
+                  fontSize: 10,
+                  fontWeight: 700,
+                  color: C.roxo,
+                }}
+              >
+                Período {i + 1}
+              </span>
+              <span style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 13, fontWeight: 700, color: C.preto }}>
+                {p.label}
+              </span>
+              <button
+                onClick={() => removerPeriodo(p.key)}
+                className="baz-touch-target"
+                title="Remover período"
+                style={{ background: "transparent", border: "none", color: C.cinza, cursor: "pointer", fontSize: 14, lineHeight: 1 }}
+              >
+                ×
+              </button>
             </div>
+          ))}
+
+          {resolvidos.length < 4 ? (
+            <SlotPicker
+              meses={meses}
+              semanas={semanas}
+              granularidade={granularidade}
+              jaAdicionados={resolvidos.map((p) => p.key)}
+              onAdd={adicionarPeriodo}
+            />
+          ) : (
+            <p style={{ ...linhaStyle, margin: 0 }}>Máximo de 4 períodos — remova um pra trocar.</p>
           )}
         </div>
       </div>
