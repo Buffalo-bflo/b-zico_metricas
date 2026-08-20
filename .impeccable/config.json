@@ -1,0 +1,26 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "design-system-font-size",
+        "value": "20px",
+        "files": [
+          "src/app/globals.css"
+        ],
+        "createdAt": "2026-08-20T15:41:41.727Z",
+        "reason": "glifo de seta do acordeão (chevron), não é texto de corpo — não faz parte da escala tipográfica documentada, é tamanho de ícone"
+      },
+      {
+        "rule": "design-system-font-size",
+        "value": "16px",
+        "files": [
+          "src/app/globals.css"
+        ],
+        "createdAt": "2026-08-20T15:52:08.549Z",
+        "reason": "piso de acessibilidade do iOS Safari (evita zoom automático ao focar campo), não é uma escolha de hierarquia tipográfica"
+      }
+    ]
+  }
+}

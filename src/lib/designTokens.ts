@@ -7,8 +7,12 @@ export const C = {
   roxoEscuro: "#24174A",
   creme: "#F2D2B4",
   roxoTint: "#F1ECF8",
-  cinza: "#8A8A8A",
+  cinza: "#6B6B6B",
   linha: "#E7E3EE",
+  erro: "#B3261E",
+  aviso: "#F0B429",
+  avisoFundo: "#FFF4E5",
+  avisoTexto: "#7A4A00",
 } as const;
 
 export const TIPO_COLORS: Record<string, string> = {

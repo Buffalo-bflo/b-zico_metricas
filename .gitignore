@@ -43,3 +43,9 @@ next-env.d.ts
 
 # Progresso da importação histórica — regenerável, não precisa versionar
 scripts/.backfill-state.json
+
+# Impeccable — rascunho de sessão do modo /live e cache local de edições (não faz
+# sentido versionar: é específico desta máquina e se regenera sozinho)
+.impeccable/live/
+.impeccable/hook.cache.json
+.impeccable/config.local.json

@@ -21,9 +21,11 @@ export function ProjecaoSection({
   testesResumo: { confirmadas: number; refutadas: number; observando: number; total: number };
 }) {
   return (
-    <div style={{ background: C.branco, border: `1px solid ${C.linha}`, borderRadius: 4, padding: 20 }}>
-      <SectionTitle>Projeção e tendências</SectionTitle>
-
+    <details className="baz-accordion">
+      <summary className="baz-accordion-summary">
+        <SectionTitle tight>Projeção e tendências</SectionTitle>
+      </summary>
+      <div className="baz-accordion-body">
       {!projecaoData ? (
         <p style={{ fontSize: 13, color: C.cinza }}>
           Ainda não há semanas completas o bastante de métricas diárias pra calcular uma projeção. Suba pelo
@@ -117,7 +119,7 @@ export function ProjecaoSection({
             <div style={{ fontSize: 11, color: C.cinza }}>hipóteses confirmadas</div>
           </div>
           <div>
-            <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 20, fontWeight: 700, color: "#B3261E" }}>
+            <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 20, fontWeight: 700, color: C.erro }}>
               {testesResumo.refutadas}
             </div>
             <div style={{ fontSize: 11, color: C.cinza }}>hipóteses refutadas</div>
@@ -130,6 +132,7 @@ export function ProjecaoSection({
           </div>
         </div>
       </div>
-    </div>
+      </div>
+    </details>
   );
 }

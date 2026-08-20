@@ -5,7 +5,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsi
 import { SectionTitle } from "@/components/Brand";
 import { C } from "@/lib/designTokens";
 import { fmt } from "@/lib/metrics";
-import { monthLabelCap, monthBounds } from "@/lib/months";
+import { monthLabelCap, monthBounds, monthOnlyLabel } from "@/lib/months";
 import { weekLabel } from "@/lib/weeks";
 
 type MesResultado = {
@@ -46,7 +46,7 @@ function DeltaBadge({ v }: { v: number | null }) {
         fontFamily: "'JetBrains Mono', monospace",
         fontSize: 11,
         fontWeight: 700,
-        color: positivo ? C.roxo : "#B3261E",
+        color: positivo ? C.roxo : C.erro,
         marginLeft: 6,
       }}
     >
@@ -95,21 +95,29 @@ export function CompararClient({
 
   const [selecionados, setSelecionados] = useState<string[]>(() => periodosDisponiveis.slice(0, 2).map((p) => p.key));
 
-  useEffect(() => {
+  // Reseta a seleção pros 2 primeiros períodos quando o usuário troca de granularidade
+  // ou de ano — ajustado durante o render (padrão recomendado pelo React pra "resetar
+  // estado quando uma prop muda"), em vez de um useEffect, pra não disparar uma
+  // renderização extra nem depender de listas de dependência incompletas de propósito.
+  const [chaveSelecaoAnterior, setChaveSelecaoAnterior] = useState(`${granularidade}|${anoFiltro}`);
+  const chaveSelecaoAtual = `${granularidade}|${anoFiltro}`;
+  if (chaveSelecaoAtual !== chaveSelecaoAnterior) {
+    setChaveSelecaoAnterior(chaveSelecaoAtual);
     setSelecionados(periodosDisponiveis.slice(0, 2).map((p) => p.key));
-  }, [granularidade, anoFiltro]); // eslint-disable-line react-hooks/exhaustive-deps
+  }
 
   const [dados, setDados] = useState<MesResultado[]>([]);
   const [carregando, setCarregando] = useState(false);
   const [metricaChart, setMetricaChart] = useState("alcance");
 
   useEffect(() => {
-    if (selecionados.length === 0) {
-      setDados([]);
-      return;
-    }
+    if (selecionados.length === 0) return;
     const periodosSelecionados = periodosDisponiveis.filter((p) => selecionados.includes(p.key));
     if (periodosSelecionados.length === 0) return;
+    // Ligar o "carregando" antes da busca é o mesmo padrão do exemplo oficial do React
+    // pra buscar dado num efeito (react.dev/learn/you-might-not-need-an-effect#fetching-data)
+    // — não é o caso de "estado derivado de prop" que essa regra existe pra evitar.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setCarregando(true);
     const query = periodosSelecionados.map((p) => `${p.start}:${p.end}`).join(",");
     fetch(`/api/compare?periods=${query}`)
@@ -126,6 +134,60 @@ export function CompararClient({
     });
   };
 
+  const podeAdicionar = selecionados.length < 4;
+
+  // Semanas de um ano inteiro somadas viram uma parede de botões — agrupar por mês
+  // (com o nome do mês servindo de âncora visual) deixa a lista escaneável em vez de
+  // uma grade solta sem estrutura.
+  const semanasPorMes = useMemo(() => {
+    const grupos = new Map<string, Periodo[]>();
+    for (const p of periodosDisponiveis) {
+      const mesKey = p.start.slice(0, 7);
+      const lista = grupos.get(mesKey) ?? [];
+      lista.push(p);
+      grupos.set(mesKey, lista);
+    }
+    return Array.from(grupos.entries()).map(([mes, periodos]) => ({ mes, periodos }));
+  }, [periodosDisponiveis]);
+
+  const rotuloStyle = {
+    fontFamily: "'Montserrat', sans-serif",
+    fontSize: 11,
+    fontWeight: 700 as const,
+    letterSpacing: "0.05em",
+    textTransform: "uppercase" as const,
+    color: C.cinza,
+  };
+
+  function renderPill(p: Periodo) {
+    const ativo = selecionados.includes(p.key);
+    const desabilitado = !ativo && !podeAdicionar;
+    return (
+      <button
+        key={p.key}
+        onClick={() => toggleKey(p.key)}
+        className="baz-touch-target"
+        disabled={desabilitado}
+        title={desabilitado ? "Já tem 4 períodos selecionados — desmarque um pra trocar" : undefined}
+        style={{
+          fontFamily: "'Montserrat', sans-serif",
+          fontSize: 12,
+          fontWeight: ativo ? 700 : 400,
+          padding: "6px 12px",
+          background: ativo ? C.preto : "transparent",
+          color: ativo ? C.branco : desabilitado ? C.cinza : C.preto,
+          border: `1px solid ${ativo ? C.preto : C.linha}`,
+          borderRadius: 20,
+          cursor: desabilitado ? "not-allowed" : "pointer",
+          opacity: desabilitado ? 0.55 : 1,
+          whiteSpace: "nowrap",
+        }}
+      >
+        {p.label}
+      </button>
+    );
+  }
+
   const labelPorStart = useMemo(
     () => Object.fromEntries(periodosDisponiveis.map((p) => [p.start, p.label])),
     [periodosDisponiveis]
@@ -141,7 +203,13 @@ export function CompararClient({
     [periodosDisponiveis, selecionados, corteConfiavel]
   );
 
-  const dadosOrdenados = useMemo(() => [...dados].sort((a, b) => a.start.localeCompare(b.start)), [dados]);
+  // Quando a seleção fica vazia, o efeito acima não busca nada — mas os dados do
+  // pedido anterior continuam em `dados` até uma nova busca. Ignorar aqui evita
+  // mostrar resultado de uma seleção que o usuário já desmarcou.
+  const dadosOrdenados = useMemo(
+    () => (selecionados.length === 0 ? [] : [...dados].sort((a, b) => a.start.localeCompare(b.start))),
+    [dados, selecionados]
+  );
 
   const chartData = useMemo(() => {
     const porDia = new Map<number, Record<string, number | undefined>>();
@@ -177,81 +245,76 @@ export function CompararClient({
           borderRadius: 6,
           padding: "14px 18px",
           marginBottom: 20,
-          display: "flex",
-          gap: 16,
-          flexWrap: "wrap",
-          alignItems: "center",
         }}
       >
-        <div style={{ display: "flex", gap: 4 }}>
-          {(["mes", "semana"] as const).map((g) => (
-            <button
-              key={g}
-              onClick={() => setGranularidade(g)}
-              style={{
-                fontFamily: "'Montserrat', sans-serif",
-                fontSize: 12,
-                fontWeight: granularidade === g ? 700 : 400,
-                padding: "6px 14px",
-                background: granularidade === g ? C.roxo : "transparent",
-                color: granularidade === g ? C.branco : C.preto,
-                border: `1px solid ${C.roxo}`,
-                borderRadius: 20,
-                cursor: "pointer",
-              }}
-            >
-              {g === "mes" ? "Por mês" : "Por semana"}
-            </button>
-          ))}
+        <div style={{ display: "flex", gap: 16, flexWrap: "wrap", alignItems: "center" }}>
+          <div style={{ display: "flex", gap: 4 }}>
+            {(["mes", "semana"] as const).map((g) => (
+              <button
+                key={g}
+                onClick={() => setGranularidade(g)}
+                className="baz-touch-target"
+                style={{
+                  fontFamily: "'Montserrat', sans-serif",
+                  fontSize: 12,
+                  fontWeight: granularidade === g ? 700 : 400,
+                  padding: "6px 14px",
+                  background: granularidade === g ? C.roxo : "transparent",
+                  color: granularidade === g ? C.branco : C.preto,
+                  border: `1px solid ${C.roxo}`,
+                  borderRadius: 20,
+                  cursor: "pointer",
+                }}
+              >
+                {g === "mes" ? "Por mês" : "Por semana"}
+              </button>
+            ))}
+          </div>
+          <div style={{ width: 1, height: 20, background: C.linha }} />
+          <select
+            value={anoFiltro}
+            onChange={(e) => setAnoFiltro(e.target.value)}
+            className="baz-touch-target"
+            style={{
+              fontFamily: "'Montserrat', sans-serif",
+              fontSize: 12,
+              fontWeight: 700,
+              padding: "6px 10px",
+              border: `1px solid ${C.preto}`,
+              borderRadius: 20,
+              color: C.preto,
+              background: C.branco,
+              cursor: "pointer",
+            }}
+          >
+            {anos.map((a) => (
+              <option key={a} value={a}>
+                {a}
+              </option>
+            ))}
+          </select>
         </div>
-        <div style={{ width: 1, height: 20, background: C.linha }} />
-        <select
-          value={anoFiltro}
-          onChange={(e) => setAnoFiltro(e.target.value)}
-          style={{
-            fontFamily: "'Montserrat', sans-serif",
-            fontSize: 12,
-            fontWeight: 700,
-            padding: "6px 10px",
-            border: `1px solid ${C.preto}`,
-            borderRadius: 20,
-            color: C.preto,
-            background: C.branco,
-            cursor: "pointer",
-          }}
-        >
-          {anos.map((a) => (
-            <option key={a} value={a}>
-              {a}
-            </option>
-          ))}
-        </select>
-        <span style={{ ...linhaStyle, marginRight: -8 }}>
-          {granularidade === "mes" ? "Meses" : "Semanas"} (até 4):
-        </span>
-        {periodosDisponiveis.map((p) => {
-          const ativo = selecionados.includes(p.key);
-          return (
-            <button
-              key={p.key}
-              onClick={() => toggleKey(p.key)}
-              style={{
-                fontFamily: "'Montserrat', sans-serif",
-                fontSize: 12,
-                fontWeight: ativo ? 700 : 400,
-                padding: "6px 12px",
-                background: ativo ? C.preto : "transparent",
-                color: ativo ? C.branco : C.preto,
-                border: `1px solid ${C.preto}`,
-                borderRadius: 20,
-                cursor: "pointer",
-                whiteSpace: "nowrap",
-              }}
-            >
-              {p.label}
-            </button>
-          );
-        })}
+
+        <div style={{ marginTop: 14, paddingTop: 14, borderTop: `1px solid ${C.linha}` }}>
+          <span style={{ ...rotuloStyle, display: "block", marginBottom: 10 }}>
+            {granularidade === "mes" ? "Meses" : "Semanas"} (até 4)
+          </span>
+
+          {granularidade === "mes" ? (
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>{periodosDisponiveis.map(renderPill)}</div>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {semanasPorMes.map(({ mes, periodos }) => (
+                <div key={mes} style={{ display: "flex", gap: 10, alignItems: "flex-start", flexWrap: "wrap" }}>
+                  <span style={{ ...rotuloStyle, minWidth: 72, flexShrink: 0, paddingTop: 6 }}>
+                    {monthOnlyLabel(mes)}
+                  </span>
+                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap", flex: 1 }}>{periodos.map(renderPill)}</div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       {granularidade === "semana" && (
@@ -264,8 +327,8 @@ export function CompararClient({
       {periodosNaoConfiaveis.length > 0 && (
         <div
           style={{
-            background: "#B3261E12",
-            borderLeft: "3px solid #B3261E",
+            background: `${C.erro}12`,
+            border: `1px solid ${C.erro}`,
             borderRadius: 4,
             padding: "12px 14px",
             fontSize: 12,
@@ -294,13 +357,13 @@ export function CompararClient({
           {new Set(dadosOrdenados.map(diasComDados)).size > 1 && (
             <div
               style={{
-                background: "#FFF4E5",
-                border: "1px solid #F0B429",
+                background: C.avisoFundo,
+                border: `1px solid ${C.aviso}`,
                 borderRadius: 4,
                 padding: "10px 14px",
                 marginBottom: 16,
                 fontSize: 12,
-                color: "#7A4A00",
+                color: C.avisoTexto,
               }}
             >
               Atenção: os períodos selecionados têm quantidades diferentes de dias com dados (veja a linha
@@ -424,6 +487,7 @@ export function CompararClient({
                   <button
                     key={m.key}
                     onClick={() => setMetricaChart(m.key)}
+                    className="baz-touch-target"
                     style={{
                       fontFamily: "'Montserrat', sans-serif",
                       fontSize: 11,

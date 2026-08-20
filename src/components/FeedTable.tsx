@@ -71,6 +71,7 @@ export function FeedTable({ posts: postsIniciais, totalGeral }: { posts: FeedTab
             <button
               key={t}
               onClick={() => setTipoFiltro(t)}
+              className="baz-touch-target"
               style={{
                 fontFamily: "'Montserrat', sans-serif",
                 fontSize: 11,
@@ -89,6 +90,7 @@ export function FeedTable({ posts: postsIniciais, totalGeral }: { posts: FeedTab
           <select
             value={ordenarPor}
             onChange={(e) => setOrdenarPor(e.target.value as keyof FeedTableRow)}
+            className="baz-touch-target"
             style={{
               fontFamily: "'Montserrat', sans-serif",
               fontSize: 11,

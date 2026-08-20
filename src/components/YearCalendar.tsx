@@ -95,10 +95,13 @@ export function YearCalendar({ notas, onDayClick }: { notas: Nota[]; onDayClick?
                   const notasDia = notasPorDia.get(iso);
                   const temNota = !!notasDia?.length;
                   return (
-                    <div
+                    <button
                       key={i}
+                      type="button"
                       onClick={() => onDayClick?.(iso)}
+                      disabled={!onDayClick}
                       title={notasDia?.join(" · ")}
+                      aria-label={temNota ? `${iso} — ${notasDia!.join(" · ")}` : iso}
                       style={{
                         aspectRatio: "1",
                         display: "flex",
@@ -106,7 +109,9 @@ export function YearCalendar({ notas, onDayClick }: { notas: Nota[]; onDayClick?
                         justifyContent: "center",
                         fontFamily: "'JetBrains Mono', monospace",
                         fontSize: 10,
+                        border: "none",
                         borderRadius: 3,
+                        padding: 0,
                         cursor: onDayClick ? "pointer" : "default",
                         background: temNota ? C.roxo : "transparent",
                         color: temNota ? C.branco : C.preto,
@@ -114,7 +119,7 @@ export function YearCalendar({ notas, onDayClick }: { notas: Nota[]; onDayClick?
                       }}
                     >
                       {dia}
-                    </div>
+                    </button>
                   );
                 })}
               </div>

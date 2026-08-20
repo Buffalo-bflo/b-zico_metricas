@@ -16,7 +16,7 @@ export function Diff({ tipo }: { tipo?: "big" | "normal" }) {
   );
 }
 
-export function SectionTitle({ children }: { children: React.ReactNode }) {
+export function SectionTitle({ children, tight }: { children: React.ReactNode; tight?: boolean }) {
   return (
     <h2
       style={{
@@ -25,7 +25,7 @@ export function SectionTitle({ children }: { children: React.ReactNode }) {
         fontSize: 15,
         letterSpacing: "-0.01em",
         color: C.preto,
-        margin: "0 0 14px 0",
+        margin: tight ? 0 : "0 0 14px 0",
         display: "flex",
         alignItems: "center",
       }}
@@ -122,7 +122,7 @@ export const TabButton = ({
 }) => (
   <a
     href={href}
-    className={`baz-tab${active ? " active" : ""}`}
+    className={`baz-tab baz-touch-target${active ? " active" : ""}`}
     style={{
       fontFamily: "'Montserrat', sans-serif",
       fontWeight: active ? 700 : 400,
@@ -134,7 +134,8 @@ export const TabButton = ({
       borderBottom: `1px solid ${C.linha}`,
       cursor: "pointer",
       marginRight: 2,
-      display: "inline-block",
+      display: "inline-flex",
+      alignItems: "center",
     }}
   >
     {children}

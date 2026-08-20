@@ -29,15 +29,18 @@ export function BaselineSection({ baseline }: { baseline: Baseline }) {
   const janelaAtual = JANELAS.find((j) => j.key === baseline.janela) ?? JANELAS[1];
 
   return (
-    <div style={{ background: C.branco, border: `1px solid ${C.linha}`, borderRadius: 4, padding: 20 }}>
-      <SectionTitle>Média de referência por formato</SectionTitle>
-
+    <details className="baz-accordion">
+      <summary className="baz-accordion-summary">
+        <SectionTitle tight>Média de referência por formato</SectionTitle>
+      </summary>
+      <div className="baz-accordion-body">
       <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 10 }}>
         {JANELAS.map((j) => (
           <button
             key={j.key}
             onClick={() => trocarJanela(j.key)}
             title={j.ajuda}
+            className="baz-touch-target"
             style={{
               fontFamily: "'Montserrat', sans-serif",
               fontSize: 11,
@@ -65,7 +68,7 @@ export function BaselineSection({ baseline }: { baseline: Baseline }) {
         <div
           style={{
             background: `${C.roxo}12`,
-            borderLeft: `3px solid ${C.roxo}`,
+            border: `1px solid ${C.roxo}`,
             padding: "10px 12px",
             borderRadius: 4,
             fontSize: 11,
@@ -160,6 +163,7 @@ export function BaselineSection({ baseline }: { baseline: Baseline }) {
           )}
         </div>
       )}
-    </div>
+      </div>
+    </details>
   );
 }

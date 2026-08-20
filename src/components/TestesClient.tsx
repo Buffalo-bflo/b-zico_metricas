@@ -29,7 +29,7 @@ const VARIAVEIS_SUGERIDAS = ["Gancho", "Formato", "Horário", "CTA", "Tema", "Du
 const hoje = () => new Date().toISOString().slice(0, 10);
 
 const corResultado = (r: string | null) =>
-  r === "Confirmado" ? C.roxo : r === "Refutado" ? "#B3261E" : C.cinza;
+  r === "Confirmado" ? C.roxo : r === "Refutado" ? C.erro : C.cinza;
 
 const formVazio = {
   nomeTeste: "",
@@ -61,9 +61,8 @@ function SeletorPosts({
       {posts.map((p) => {
         const ativo = selecionados.includes(p.id);
         return (
-          <div
+          <label
             key={p.id}
-            onClick={() => onToggle(p.id)}
             style={{
               padding: "6px 10px",
               borderBottom: `1px solid ${C.linha}`,
@@ -77,11 +76,11 @@ function SeletorPosts({
               alignItems: "center",
             }}
           >
-            <input type="checkbox" checked={ativo} readOnly style={{ pointerEvents: "none" }} />
+            <input type="checkbox" checked={ativo} onChange={() => onToggle(p.id)} />
             <span>
               {fmtDate(p.post_date)} · {p.post_type} · {(p.description ?? "").split("\n")[0].slice(0, 38)}
             </span>
-          </div>
+          </label>
         );
       })}
     </div>
@@ -176,40 +175,43 @@ export function TestesClient({ testesIniciais, posts }: { testesIniciais: Teste[
       ids.map((id) => posts.find((p) => p.id === id)).filter(Boolean) as PostOpcao[];
 
     return (
-      <div style={cardStyle}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10, flexWrap: "wrap" }}>
-          <div style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 14, fontWeight: 700, color: C.preto }}>
-            {t.nome_teste}
-          </div>
-          <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-            <span
-              style={{
-                fontSize: 10,
-                fontWeight: 700,
-                padding: "3px 10px",
-                borderRadius: 20,
-                border: `1px solid ${t.status === "Concluído" ? C.cinza : C.roxo}`,
-                color: t.status === "Concluído" ? C.cinza : C.roxo,
-              }}
-            >
-              {t.status}
-            </span>
-            {t.resultado && (
+      <details className="baz-accordion" style={{ marginBottom: 12 }}>
+        <summary className="baz-accordion-summary">
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, flexWrap: "wrap", flex: 1 }}>
+            <div style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 14, fontWeight: 700, color: C.preto }}>
+              {t.nome_teste}
+            </div>
+            <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
               <span
                 style={{
                   fontSize: 10,
                   fontWeight: 700,
                   padding: "3px 10px",
                   borderRadius: 20,
-                  background: corResultado(t.resultado),
-                  color: C.branco,
+                  border: `1px solid ${t.status === "Concluído" ? C.cinza : C.roxo}`,
+                  color: t.status === "Concluído" ? C.cinza : C.roxo,
                 }}
               >
-                {t.resultado}
+                {t.status}
               </span>
-            )}
+              {t.resultado && (
+                <span
+                  style={{
+                    fontSize: 10,
+                    fontWeight: 700,
+                    padding: "3px 10px",
+                    borderRadius: 20,
+                    background: corResultado(t.resultado),
+                    color: C.branco,
+                  }}
+                >
+                  {t.resultado}
+                </span>
+              )}
+            </div>
           </div>
-        </div>
+        </summary>
+        <div className="baz-accordion-body">
 
         <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: C.cinza, margin: "4px 0 10px" }}>
           {fmtDate(t.data_inicio)}
@@ -338,7 +340,8 @@ export function TestesClient({ testesIniciais, posts }: { testesIniciais: Teste[
             </button>
           </div>
         )}
-      </div>
+        </div>
+      </details>
     );
   }
 
@@ -358,7 +361,7 @@ export function TestesClient({ testesIniciais, posts }: { testesIniciais: Teste[
       </p>
 
       {erro && (
-        <div style={{ background: "#B3261E14", borderLeft: "3px solid #B3261E", padding: "10px 12px", borderRadius: 4, fontSize: 12, color: C.preto, marginBottom: 14 }}>
+        <div style={{ background: `${C.erro}14`, border: `1px solid ${C.erro}`, padding: "10px 12px", borderRadius: 4, fontSize: 12, color: C.preto, marginBottom: 14 }}>
           {erro}
         </div>
       )}
@@ -403,7 +406,7 @@ export function TestesClient({ testesIniciais, posts }: { testesIniciais: Teste[
               </datalist>
             </label>
             <label style={labelStyle}>
-              Critério de sucesso — <b style={{ color: "#B3261E" }}>trava quando o teste começar</b>
+              Critério de sucesso — <b style={{ color: C.erro }}>trava quando o teste começar</b>
               <textarea
                 value={form.criterioSucesso}
                 onChange={(e) => setForm({ ...form, criterioSucesso: e.target.value })}

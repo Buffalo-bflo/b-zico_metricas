@@ -1,0 +1,145 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-08-20T15:00:00.000Z",
+  "title": "Design System: Bázico Métricas",
+  "extensions": {
+    "colorMeta": {
+      "preto": { "role": "neutral", "displayName": "Tinta", "canonical": "#232323", "tonalRamp": ["#131313", "#232323", "#3a3a3a", "#525252", "#6b6b6b", "#8a8a8a", "#c4c4c4", "#f2f2f2"] },
+      "branco": { "role": "neutral", "displayName": "Papel", "canonical": "#FFFFFF", "tonalRamp": ["#dedede", "#e8e8e8", "#f0f0f0", "#f5f5f5", "#fafafa", "#fcfcfc", "#fefefe", "#ffffff"] },
+      "canvas": { "role": "neutral", "displayName": "Tela", "canonical": "#FAFAFA", "tonalRamp": ["#dcdcdc", "#e6e6e6", "#eeeeee", "#f4f4f4", "#fafafa", "#fbfbfb", "#fdfdfd", "#ffffff"] },
+      "roxo": { "role": "primary", "displayName": "Roxo Bázico", "canonical": "#754EA9", "tonalRamp": ["oklch(20% 0.09 300)", "oklch(28% 0.11 300)", "oklch(37% 0.13 300)", "oklch(47% 0.145 300)", "oklch(58% 0.13 300)", "oklch(70% 0.10 300)", "oklch(84% 0.06 300)", "oklch(95% 0.02 300)"] },
+      "roxo-escuro": { "role": "primary", "displayName": "Roxo Escuro", "canonical": "#24174A", "tonalRamp": ["oklch(10% 0.06 300)", "oklch(16% 0.08 300)", "oklch(22% 0.10 300)", "oklch(28% 0.11 300)", "oklch(38% 0.12 300)", "oklch(50% 0.12 300)", "oklch(66% 0.09 300)", "oklch(85% 0.04 300)"] },
+      "roxo-tint": { "role": "primary", "displayName": "Roxo Claro", "canonical": "#F1ECF8", "tonalRamp": ["oklch(40% 0.10 300)", "oklch(52% 0.10 300)", "oklch(64% 0.08 300)", "oklch(75% 0.06 300)", "oklch(85% 0.04 300)", "oklch(91% 0.025 300)", "oklch(95% 0.015 300)", "oklch(98% 0.005 300)"] },
+      "creme": { "role": "tertiary", "displayName": "Creme", "canonical": "#F2D2B4", "tonalRamp": ["oklch(35% 0.06 60)", "oklch(45% 0.07 60)", "oklch(58% 0.08 60)", "oklch(70% 0.08 60)", "oklch(80% 0.07 60)", "oklch(87% 0.055 60)", "oklch(92% 0.035 60)", "oklch(97% 0.015 60)"] },
+      "cinza": { "role": "neutral", "displayName": "Cinza Rótulo", "canonical": "#6B6B6B", "tonalRamp": ["#1a1a1a", "#2e2e2e", "#454545", "#5c5c5c", "#6b6b6b", "#8a8a8a", "#b5b5b5", "#dedede"] },
+      "linha": { "role": "neutral", "displayName": "Linha", "canonical": "#E7E3EE", "tonalRamp": ["oklch(30% 0.03 300)", "oklch(45% 0.03 300)", "oklch(60% 0.03 300)", "oklch(75% 0.025 300)", "oklch(85% 0.02 300)", "oklch(91% 0.015 300)", "oklch(95% 0.01 300)", "oklch(98% 0.004 300)"] },
+      "erro": { "role": "semantic", "displayName": "Alerta", "canonical": "#B3261E", "tonalRamp": ["oklch(20% 0.10 25)", "oklch(28% 0.14 25)", "oklch(37% 0.17 25)", "oklch(46% 0.19 25)", "oklch(56% 0.18 25)", "oklch(68% 0.14 25)", "oklch(82% 0.08 25)", "oklch(94% 0.03 25)"] },
+      "aviso": { "role": "semantic", "displayName": "Aviso", "canonical": "#F0B429", "tonalRamp": ["oklch(25% 0.09 75)", "oklch(35% 0.11 75)", "oklch(46% 0.13 75)", "oklch(58% 0.15 75)", "oklch(70% 0.15 75)", "oklch(80% 0.13 75)", "oklch(89% 0.08 75)", "oklch(96% 0.03 75)"] },
+      "aviso-fundo": { "role": "semantic", "displayName": "Aviso Fundo", "canonical": "#FFF4E5", "tonalRamp": ["oklch(35% 0.06 75)", "oklch(48% 0.07 75)", "oklch(62% 0.07 75)", "oklch(75% 0.06 75)", "oklch(85% 0.045 75)", "oklch(92% 0.03 75)", "oklch(96% 0.015 75)", "oklch(99% 0.005 75)"] },
+      "aviso-texto": { "role": "semantic", "displayName": "Aviso Texto", "canonical": "#7A4A00", "tonalRamp": ["oklch(15% 0.05 60)", "oklch(22% 0.07 60)", "oklch(30% 0.09 60)", "oklch(38% 0.10 60)", "oklch(48% 0.10 60)", "oklch(60% 0.09 60)", "oklch(75% 0.06 60)", "oklch(90% 0.03 60)"] }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display (dado grande)", "purpose": "O valor numérico principal de um KpiCard — o número que a tela quer que você veja primeiro." },
+      "headline": { "displayName": "Headline", "purpose": "Título de seção, sempre acompanhado do glifo ≠." },
+      "title": { "displayName": "Title", "purpose": "Abas de navegação e rótulos de destaque curto." },
+      "body": { "displayName": "Body", "purpose": "Texto corrido, células de tabela, descrições." },
+      "label": { "displayName": "Label", "purpose": "Cabeçalhos de coluna e rótulos acima de KPIs, sempre caixa alta." }
+    },
+    "shadows": [
+      { "name": "card-hover", "value": "0 8px 24px rgba(35,35,35,0.07)", "purpose": "Único uso de sombra do sistema — resposta ao hover de um card (.baz-card), nunca em repouso." }
+    ],
+    "motion": [
+      { "name": "ease-entrance", "value": "cubic-bezier(0.16, 1, 0.3, 1)", "purpose": "Easing padrão para entradas de conteúdo (fadeUp) e transições de hover em cards." },
+      { "name": "duration-entrance", "value": "0.45s", "purpose": "Duração da animação de entrada fadeUp, incluindo o stagger de listas (até 6 itens, incrementos de ~0.04s)." },
+      { "name": "duration-fade", "value": "0.35s", "purpose": "Duração da animação fadeIn simples, sem deslocamento vertical." },
+      { "name": "duration-micro", "value": "0.15s–0.25s", "purpose": "Transições de estado rápidas: hover de botão, cor de aba, sublinhado deslizante." }
+    ],
+    "breakpoints": [
+      { "name": "mobile", "value": "760px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Botão Primário",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Ação principal — fundo preto, escurece para roxo no hover.",
+      "html": "<button class=\"ds-btn-primary\">Entrar</button>",
+      "css": ".ds-btn-primary { font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 13px; padding: 10px 16px; background: #232323; color: #FFFFFF; border: none; border-radius: 3px; cursor: pointer; transition: background 0.15s ease, transform 0.1s ease; } .ds-btn-primary:hover { background: #24174A; } .ds-btn-primary:active { transform: scale(0.97); } .ds-btn-primary:focus-visible { outline: 2px solid #754EA9; outline-offset: 1px; }"
+    },
+    {
+      "name": "Botão Secundário",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Ação secundária — contorno preto, inverte para preenchido no hover.",
+      "html": "<button class=\"ds-btn-secondary\">Cancelar</button>",
+      "css": ".ds-btn-secondary { font-family: 'Montserrat', sans-serif; font-weight: 300; font-size: 12px; padding: 8px 16px; background: transparent; color: #232323; border: 1px solid #232323; border-radius: 3px; cursor: pointer; transition: background 0.15s ease, border-color 0.15s ease; } .ds-btn-secondary:hover { background: #232323; color: #FFFFFF; }"
+    },
+    {
+      "name": "Seletor em Pílula",
+      "kind": "input",
+      "refersTo": "pill-select",
+      "description": "Select usado nos seletores de período (Ano/Mês/Semana) — borda preta, canto totalmente arredondado.",
+      "html": "<select class=\"ds-pill-select\"><option>Agosto</option></select>",
+      "css": ".ds-pill-select { font-family: 'Montserrat', sans-serif; font-size: 12px; font-weight: 700; padding: 7px 10px; border: 1px solid #232323; border-radius: 20px; color: #232323; background: #FFFFFF; cursor: pointer; } .ds-pill-select:focus-visible { outline: 2px solid #754EA9; outline-offset: 1px; }"
+    },
+    {
+      "name": "Chip de Filtro",
+      "kind": "chip",
+      "refersTo": "chip-active",
+      "description": "Botão de filtro em pílula — preenchido preto quando ativo, transparente quando inativo.",
+      "html": "<div style=\"display:flex;gap:6px\"><button class=\"ds-chip ds-chip-active\">Reels</button><button class=\"ds-chip\">Carrossel</button></div>",
+      "css": ".ds-chip { font-family: 'Montserrat', sans-serif; font-size: 11px; font-weight: 300; padding: 5px 12px; background: transparent; color: #232323; border: 1px solid #232323; border-radius: 20px; cursor: pointer; } .ds-chip-active { font-weight: 700; background: #232323; color: #FFFFFF; }"
+    },
+    {
+      "name": "Badge de Tipo",
+      "kind": "chip",
+      "description": "Badge categórico usado na tabela do Feed — cor muda por tipo de post (Reels=roxo, Carrossel=roxo-escuro, Imagem=roxo claro, Story=creme).",
+      "html": "<span class=\"ds-badge\" style=\"color:#754EA9;border-color:#754EA9\">Reels</span>",
+      "css": ".ds-badge { font-family: 'Montserrat', sans-serif; font-size: 10px; font-weight: 700; border: 1px solid currentColor; border-radius: 20px; padding: 2px 8px; display: inline-block; }"
+    },
+    {
+      "name": "KpiCard",
+      "kind": "card",
+      "refersTo": "kpi-card",
+      "description": "Cartão de métrica principal — barra lateral colorida, rótulo em caixa alta, valor grande em monoespaçada, sobe 2px no hover.",
+      "html": "<div class=\"ds-kpi-card\"><div class=\"ds-kpi-bar\"></div><div class=\"ds-kpi-label\">Alcance</div><div class=\"ds-kpi-value\">42.918</div><div class=\"ds-kpi-sub\">+12% vs. período anterior</div></div>",
+      "css": ".ds-kpi-card { position: relative; overflow: hidden; background: #FFFFFF; border: 1px solid #E7E3EE; border-radius: 6px; padding: 18px 20px; min-width: 150px; transition: transform 0.2s cubic-bezier(0.16,1,0.3,1), box-shadow 0.2s ease, border-color 0.2s ease; } .ds-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(35,35,35,0.07); border-color: rgba(117,78,169,0.33); } .ds-kpi-bar { position: absolute; top: 0; left: 0; width: 3px; height: 100%; background: #754EA9; } .ds-kpi-label { font-family: 'Montserrat', sans-serif; font-weight: 300; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: #6B6B6B; margin-bottom: 6px; } .ds-kpi-value { font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 26px; color: #232323; line-height: 1; } .ds-kpi-sub { font-family: 'Montserrat', sans-serif; font-size: 11px; color: #754EA9; margin-top: 6px; }"
+    },
+    {
+      "name": "Aba de Navegação",
+      "kind": "nav",
+      "description": "Aba com sublinhado deslizante — ativa em preto/roxo, inativa em cinza.",
+      "html": "<a class=\"ds-tab ds-tab-active\">Visão Geral</a><a class=\"ds-tab\">Feed</a>",
+      "css": ".ds-tab { font-family: 'Montserrat', sans-serif; font-weight: 400; font-size: 13px; padding: 9px 14px; color: #6B6B6B; border-bottom: 1px solid #E7E3EE; position: relative; display: inline-block; text-decoration: none; transition: color 0.2s ease; } .ds-tab::after { content: ''; position: absolute; left: 14px; right: 14px; bottom: -1px; height: 2px; background: #754EA9; transform: scaleX(0); transform-origin: center; transition: transform 0.25s cubic-bezier(0.16,1,0.3,1); } .ds-tab:hover { color: #754EA9; } .ds-tab-active { font-weight: 700; color: #232323; } .ds-tab-active::after { transform: scaleX(1); }"
+    },
+    {
+      "name": "Aviso de Qualidade",
+      "kind": "custom",
+      "description": "Banner de alerta usado quando o período mostrado tem dado degradado pela Meta — fundo vermelho a 7% de opacidade, borda fina de 1px ao redor (não mais barra lateral grossa).",
+      "html": "<div class=\"ds-aviso\"><b>Atenção: alcance e visualizações deste período não são confiáveis.</b></div>",
+      "css": ".ds-aviso { background: rgba(179,38,30,0.07); border: 1px solid #B3261E; border-radius: 4px; padding: 12px 14px; font-family: 'Montserrat', sans-serif; font-size: 12px; color: #232323; line-height: 1.6; }"
+    },
+    {
+      "name": "Accordion",
+      "kind": "custom",
+      "description": "Seção recolhível nativa (<details>/<summary>) — mesmo cartão do resto do sistema, título vira gatilho, glifo › gira 90° quando aberto. Fecha por padrão; só a seção mais usada de cada tela fica aberta.",
+      "html": "<details class=\"ds-accordion\"><summary class=\"ds-accordion-summary\">Título da seção</summary><div class=\"ds-accordion-body\">Conteúdo da seção.</div></details>",
+      "css": ".ds-accordion { background: #FFFFFF; border: 1px solid #E7E3EE; border-radius: 4px; } .ds-accordion-summary { cursor: pointer; list-style: none; display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 15px; color: #232323; } .ds-accordion-summary::-webkit-details-marker { display: none; } .ds-accordion-summary::after { content: '›'; font-size: 20px; line-height: 1; color: #6B6B6B; margin-left: 12px; transition: transform 0.2s ease; } .ds-accordion[open] > .ds-accordion-summary::after { transform: rotate(90deg); } .ds-accordion-body { padding: 0 20px 20px; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "A Marca Diferente (The Diff Mark)",
+    "overview": "O sistema parte do próprio símbolo da marca Bázico, o \"≠\" (diferente) — já usado como marca d'água discreta no cabeçalho e como glifo ao lado dos títulos de seção. Esse símbolo é o fio condutor: um dashboard que se recusa a ser \"mais um\" painel de métricas genérico. A superfície é neutra e disciplinada (preto, branco, cinza, linhas finas) e o roxo aparece raro, só para marcar o que é distinto — exatamente como a marca usa o \"≠\" para dizer que a Bázico não é básica no sentido pejorativo, é essencial e diferente.\n\nO clima é discreto e editorial: pouca cor, muito espaço em branco, hierarquia por peso tipográfico em vez de decoração. Números — a matéria-prima de um app de métricas — ganham voz própria numa fonte monoespaçada (JetBrains Mono), separada do texto de interface (Montserrat), para que dado e rótulo nunca se confundam visualmente. Não há sombra em repouso; a superfície é plana e só reage ao toque (hover, foco), como uma folha de papel bem impressa, não uma interface \"de app\".",
+    "keyCharacteristics": [
+      "Neutro por padrão, roxo por exceção — a cor de destaque é rara e por isso significa algo quando aparece.",
+      "Números sempre em fonte monoespaçada; texto de interface sempre em Montserrat.",
+      "Plano em repouso; profundidade só aparece como resposta a interação (hover/foco), nunca como decoração fixa.",
+      "O símbolo \"≠\" da marca é a assinatura visual recorrente — marca d'água e glifo inline, nunca usado como enfeite genérico.",
+      "Duas famílias de forma coexistindo por papel: controles interativos são pílulas; contêineres são retângulos de canto suave."
+    ],
+    "rules": [
+      { "name": "The Rare Signal Rule", "body": "O roxo (#754EA9 e seus tons) ocupa uma fração pequena de qualquer tela. Ele marca o que é ativo, selecionado ou digno de destaque — se aparecesse em toda parte, deixaria de significar alguma coisa. Confirmado deliberadamente pelo Gustavo: não expandir o uso do roxo sem decisão explícita.", "section": "colors" },
+      { "name": "The Digit Voice Rule", "body": "Todo número que representa um dado (métrica, data, valor de gráfico) usa JetBrains Mono. Todo texto de interface (rótulo, botão, navegação, prosa) usa Montserrat. Nunca misturar as duas dentro da mesma função.", "section": "typography" },
+      { "name": "The Flat-At-Rest Rule", "body": "Nenhum elemento tem sombra em seu estado padrão. Sombra é sempre uma resposta a uma ação do usuário (hover), nunca uma propriedade decorativa fixa.", "section": "elevation" },
+      { "name": "The Pill-Or-Rectangle Rule", "body": "Se o elemento é algo em que o usuário clica para escolher/filtrar, é pílula (20px). Se é algo que contém conteúdo, é retângulo de canto suave (3–6px). Nunca misturar os dois papéis.", "section": "shapes" },
+      { "name": "The One Section Open Rule", "body": "Numa tela com várias seções empilhadas, no máximo uma fica aberta por padrão — a que representa a tarefa principal daquela tela. O resto começa fechado num Accordion; um clique no título abre. Evita telas com informação demais visível de uma vez, sem esconder nenhuma função.", "section": "layout" }
+    ],
+    "dos": [
+      "Do usar o Accordion pra seções de consulta ocasional; manter só a seção mais usada da tela aberta por padrão.",
+      "Do manter o roxo raro — é o sinal em meio ao silêncio visual do resto da paleta.",
+      "Do usar JetBrains Mono para qualquer número que seja dado real, e Montserrat para tudo que é interface.",
+      "Do manter cards e superfícies planas em repouso; sombra só como resposta a hover.",
+      "Do usar pílula (20px) só em controles de seleção/filtro, e retângulo (3–6px) só em contêineres e ações diretas.",
+      "Do tratar o glifo \"≠\" como assinatura de marca — reaproveitar nas mesmas duas escalas, nunca inventar um terceiro uso decorativo pra ele."
+    ],
+    "donts": [
+      "Don't adicionar sombra em repouso a cards, botões ou tabelas.",
+      "Don't introduzir uma terceira família tipográfica.",
+      "Don't usar o vermelho de alerta (#B3261E) fora de avisos de qualidade de dado e mensagens de erro; use o âmbar de Aviso para heads-up que não são erro.",
+      "Don't expandir o uso do roxo para preenchimentos grandes de fundo ou botões.",
+      "Don't escrever cor de alerta/aviso como literal hex — sempre C.erro / C.aviso / C.avisoFundo / C.avisoTexto.",
+      "Don't usar barra colorida grossa de um lado só em banners de alerta/aviso — borda fina de 1px ao redor de todo o card, como o resto do sistema."
+    ]
+  }
+}

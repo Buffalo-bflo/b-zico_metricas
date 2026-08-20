@@ -1,6 +1,7 @@
 import { supabaseServer } from "@/lib/supabase/server";
 import { SectionTitle } from "@/components/Brand";
 import { TestesClient, type Teste, type PostOpcao } from "@/components/TestesClient";
+import { C } from "@/lib/designTokens";
 
 export const dynamic = "force-dynamic";
 
@@ -22,7 +23,7 @@ export default async function TestesPage() {
     return (
       <div className="baz-fade-up">
         <SectionTitle>Calendário de testes</SectionTitle>
-        <p style={{ color: "#B3261E", fontSize: 13 }}>Erro ao buscar testes: {error.message}</p>
+        <p style={{ color: C.erro, fontSize: 13 }}>Erro ao buscar testes: {error.message}</p>
       </div>
     );
   }

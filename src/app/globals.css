@@ -1,5 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
-
 :root {
   --preto: #232323;
   --branco: #FFFFFF;
@@ -7,8 +5,12 @@
   --roxo-escuro: #24174A;
   --creme: #F2D2B4;
   --roxo-tint: #F1ECF8;
-  --cinza: #8A8A8A;
+  --cinza: #6B6B6B;
   --linha: #E7E3EE;
+  --erro: #B3261E;
+  --aviso: #F0B429;
+  --aviso-fundo: #FFF4E5;
+  --aviso-texto: #7A4A00;
 }
 
 * {
@@ -88,8 +90,66 @@ tbody tr:hover { background: var(--roxo-tint); }
 
 .baz-row-2col { display: grid; grid-template-columns: 1.2fr 1fr; gap: 20px; }
 .baz-row-2col-even { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.baz-row-3col-even { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
 @media (max-width: 760px) {
-  .baz-row-2col, .baz-row-2col-even { grid-template-columns: 1fr; }
+  .baz-row-2col, .baz-row-2col-even, .baz-row-3col-even { grid-template-columns: 1fr; }
+}
+
+/* Botões/seletores pequenos (pílulas, chips, toggles) crescem pra caber o dedo em
+   telas de toque, sem engordar a densidade pro mouse — o Rare Signal Rule e o resto
+   do sistema continuam compactos no desktop. */
+@media (pointer: coarse) {
+  .baz-touch-target {
+    min-height: 44px;
+  }
+  button.baz-touch-target, a.baz-touch-target {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+/* Seções recolhíveis — mesmo cartão do resto do sistema (branco, borda fina, canto
+   suave), só que o título vira um gatilho pra abrir/fechar. Usado nas seções da
+   Estratégia que não precisam ficar abertas o tempo todo. */
+.baz-accordion {
+  background: var(--branco);
+  border: 1px solid var(--linha);
+  border-radius: 4px;
+}
+.baz-accordion-summary {
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+}
+.baz-accordion-summary::-webkit-details-marker { display: none; }
+.baz-accordion-summary::after {
+  content: '›';
+  font-size: 20px;
+  line-height: 1;
+  color: var(--cinza);
+  flex-shrink: 0;
+  margin-left: 12px;
+  transition: transform 0.2s ease;
+}
+.baz-accordion[open] > .baz-accordion-summary::after {
+  transform: rotate(90deg);
+}
+.baz-accordion-body {
+  padding: 0 20px 20px;
+}
+
+/* Todo campo de texto do app é desenhado a 12px (selectStyle) pra caber na
+   densidade da tabela/formulário. No celular isso dispara o zoom automático do
+   Safari ao focar um campo (< 16px), que empurra o layout inteiro — então no
+   mobile o texto digitado sobe pra 16px; o visual compacto do desktop não muda. */
+@media (max-width: 760px) {
+  input, select, textarea {
+    font-size: 16px;
+  }
 }
 
 .baz-btn-primary { transition: background 0.15s ease, transform 0.1s ease; }
@@ -107,7 +167,7 @@ tbody tr:hover { background: var(--roxo-tint); }
   user-select: none;
 }
 
-input:focus, select:focus, textarea:focus, button:focus-visible {
+input:focus, select:focus, textarea:focus, button:focus-visible, a:focus-visible, summary:focus-visible {
   outline: 2px solid var(--roxo);
   outline-offset: 1px;
 }
@@ -153,7 +213,7 @@ input:focus, select:focus, textarea:focus, button:focus-visible {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .baz-fade-up, .baz-fade-in, .baz-stagger > *, .baz-card, .baz-tab::after, .baz-btn-primary, .baz-btn-secondary {
+  .baz-fade-up, .baz-fade-in, .baz-stagger > *, .baz-card, .baz-tab::after, .baz-btn-primary, .baz-btn-secondary, .baz-accordion-summary::after {
     animation: none !important;
     transition: none !important;
   }

@@ -52,7 +52,7 @@ export default async function GeralPage({
     return (
       <div className="baz-fade-up">
         <SectionTitle>Visão Geral</SectionTitle>
-        <p style={{ color: "#B3261E", fontSize: 13 }}>Erro ao buscar dados: {error.message}</p>
+        <p style={{ color: C.erro, fontSize: 13 }}>Erro ao buscar dados: {error.message}</p>
       </div>
     );
   }
@@ -130,7 +130,13 @@ export default async function GeralPage({
         <KpiCard label="Novos Seguidores (via posts)" value={fmt(totais.novosSeguidores)} accent={C.roxoEscuro} />
       </div>
 
-      <div className="baz-row-2col-even" style={{ marginBottom: 24 }}>
+      <details className="baz-accordion" style={{ marginBottom: 24 }}>
+        <summary className="baz-accordion-summary">
+          <div style={{ fontFamily: "'Montserrat', sans-serif", fontWeight: 700, fontSize: 15, color: C.preto }}>
+            Detalhamento por formato e destaques do período
+          </div>
+        </summary>
+        <div className="baz-accordion-body baz-row-2col-even">
         <div style={{ background: C.branco, border: `1px solid ${C.linha}`, borderRadius: 6, padding: "18px 20px" }}>
           <div style={{ fontSize: 13, fontWeight: 700, color: C.preto, marginBottom: 10 }}>
             Mediana de views por formato
@@ -154,7 +160,7 @@ export default async function GeralPage({
               <div style={{ fontSize: 13, color: C.preto, marginBottom: 2 }}>
                 {melhor.description?.split("\n")[0].slice(0, 70)}
               </div>
-              <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 18, fontWeight: 700, color: C.roxo }}>
+              <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 20, fontWeight: 700, color: C.roxo }}>
                 {fmt(melhor.views)} views
               </div>
               <div style={{ fontSize: 11, color: C.cinza }}>
@@ -170,7 +176,7 @@ export default async function GeralPage({
               <div style={{ fontSize: 13, color: C.preto, marginBottom: 2 }}>
                 {pior.description?.split("\n")[0].slice(0, 70)}
               </div>
-              <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 18, fontWeight: 700, color: C.cinza }}>
+              <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 20, fontWeight: 700, color: C.cinza }}>
                 {fmt(pior.views)} views
               </div>
               <div style={{ fontSize: 11, color: C.cinza }}>
@@ -179,7 +185,8 @@ export default async function GeralPage({
             </div>
           )}
         </div>
-      </div>
+        </div>
+      </details>
     </div>
   );
 }

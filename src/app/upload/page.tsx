@@ -56,7 +56,7 @@ function SyncCard() {
         {sincronizando ? "Sincronizando..." : "Sincronizar agora"}
       </button>
 
-      {erro && <div style={{ color: "#B3261E", fontSize: 12, marginTop: 12 }}>{erro}</div>}
+      {erro && <div style={{ color: C.erro, fontSize: 12, marginTop: 12 }}>{erro}</div>}
 
       {resultado && (
         <div style={{ marginTop: 16, fontSize: 13, color: C.preto }}>
@@ -65,7 +65,7 @@ function SyncCard() {
           <div>✓ {String(resultado.storyPosts)} stories ativos agora</div>
           <div>{resultado.publicoSalvo ? "✓" : "—"} snapshot de Público {resultado.publicoSalvo ? "atualizado" : "não atualizado"}</div>
           {Array.isArray(resultado.errors) && resultado.errors.length > 0 && (
-            <div style={{ color: "#B3261E", marginTop: 6 }}>
+            <div style={{ color: C.erro, marginTop: 6 }}>
               {(resultado.errors as string[]).map((e, i) => (
                 <div key={i}>{e}</div>
               ))}
@@ -94,6 +94,7 @@ function UploadCard({
   const [enviando, setEnviando] = useState(false);
   const [resultados, setResultados] = useState<Record<string, unknown>[]>([]);
   const [erro, setErro] = useState("");
+  const inputId = `upload-${tipo}`;
 
   const enviar = async () => {
     if (arquivos.length === 0) return;
@@ -132,10 +133,13 @@ function UploadCard({
         marginBottom: 20,
       }}
     >
-      <div style={{ fontSize: 13, fontWeight: 700, color: C.preto, marginBottom: 4 }}>{titulo}</div>
+      <label htmlFor={inputId} style={{ display: "block", fontSize: 13, fontWeight: 700, color: C.preto, marginBottom: 4 }}>
+        {titulo}
+      </label>
       <div style={{ fontSize: 12, color: C.cinza, marginBottom: 16 }}>{descricao}</div>
 
       <input
+        id={inputId}
         type="file"
         accept=".csv"
         multiple={multiplo}
@@ -163,7 +167,7 @@ function UploadCard({
         {enviando ? "Processando..." : "Subir"}
       </button>
 
-      {erro && <div style={{ color: "#B3261E", fontSize: 12, marginTop: 12 }}>{erro}</div>}
+      {erro && <div style={{ color: C.erro, fontSize: 12, marginTop: 12 }}>{erro}</div>}
 
       {resultados.length > 0 && (
         <div style={{ marginTop: 16, fontSize: 13, color: C.preto }}>{renderResultado(resultados)}</div>
@@ -196,7 +200,7 @@ export default function UploadPage() {
               <div>✓ {String(r.feedCount)} posts de feed salvos</div>
               <div>✓ {String(r.storyCount)} stories salvos</div>
               {Array.isArray(r.errors) && r.errors.length > 0 && (
-                <div style={{ color: "#B3261E" }}>
+                <div style={{ color: C.erro }}>
                   {(r.errors as string[]).map((e, j) => (
                     <div key={j}>{e}</div>
                   ))}
@@ -219,7 +223,7 @@ export default function UploadPage() {
                 ✓ {String(r.nomeArquivo)}: {String(r.metricRows)} dias salvos
               </div>
               {Array.isArray(r.errors) && r.errors.length > 0 && (
-                <div style={{ color: "#B3261E" }}>
+                <div style={{ color: C.erro }}>
                   {(r.errors as string[]).map((e, j) => (
                     <div key={j}>{e}</div>
                   ))}
@@ -241,7 +245,7 @@ export default function UploadPage() {
               <div>✓ {String(r.citiesCount)} cidades</div>
               <div>✓ {String(r.countriesCount)} países</div>
               {Array.isArray(r.errors) && r.errors.length > 0 && (
-                <div style={{ color: "#B3261E" }}>
+                <div style={{ color: C.erro }}>
                   {(r.errors as string[]).map((e, j) => (
                     <div key={j}>{e}</div>
                   ))}

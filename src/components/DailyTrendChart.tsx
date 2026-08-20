@@ -46,6 +46,7 @@ export function DailyTrendChart({ data }: { data: DailyPoint[] }) {
             <button
               key={m.key}
               onClick={() => setMetric(m.key as keyof DailyPoint)}
+              className="baz-touch-target"
               style={{
                 fontFamily: "'Montserrat', sans-serif",
                 fontSize: 11,

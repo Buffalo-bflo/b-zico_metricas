@@ -8,8 +8,8 @@ export function AvisoQualidade({ corte, periodoLabel }: { corte: string | null; 
   return (
     <div
       style={{
-        background: "#B3261E12",
-        borderLeft: "3px solid #B3261E",
+        background: `${C.erro}12`,
+        border: `1px solid ${C.erro}`,
         borderRadius: 4,
         padding: "12px 14px",
         fontFamily: "'Montserrat', sans-serif",

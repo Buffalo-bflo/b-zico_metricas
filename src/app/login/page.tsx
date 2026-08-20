@@ -100,7 +100,7 @@ export default function LoginPage() {
         />
 
         {erro && (
-          <div style={{ fontSize: 12, color: "#B3261E", marginBottom: 12 }}>{erro}</div>
+          <div style={{ fontSize: 12, color: C.erro, marginBottom: 12 }}>{erro}</div>
         )}
 
         <button

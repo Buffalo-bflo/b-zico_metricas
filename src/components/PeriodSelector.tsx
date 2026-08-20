@@ -64,7 +64,7 @@ export default function PeriodSelector({ months }: { months: string[] }) {
 
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-      <select value={anoAtual} onChange={(e) => onAnoChange(e.target.value)} style={selectStyle}>
+      <select value={anoAtual} onChange={(e) => onAnoChange(e.target.value)} className="baz-touch-target" style={selectStyle}>
         {anos.map((a) => (
           <option key={a} value={a}>
             {a}
@@ -72,7 +72,7 @@ export default function PeriodSelector({ months }: { months: string[] }) {
         ))}
       </select>
 
-      <select value={mesAtual} onChange={(e) => irPara(e.target.value)} style={selectStyle}>
+      <select value={mesAtual} onChange={(e) => irPara(e.target.value)} className="baz-touch-target" style={selectStyle}>
         {mesesDoAno.map((m) => (
           <option key={m} value={m}>
             {monthOnlyLabel(m)}
@@ -83,12 +83,14 @@ export default function PeriodSelector({ months }: { months: string[] }) {
       <div style={{ display: "flex", border: `1px solid ${C.preto}`, borderRadius: 20, overflow: "hidden" }}>
         <button
           onClick={() => push({ mes: mesAtual, periodo: "mes", semana: semanas[0]?.start ?? "" })}
+          className="baz-touch-target"
           style={toggleBtnStyle(periodoAtual === "mes")}
         >
           Mês
         </button>
         <button
           onClick={() => push({ mes: mesAtual, periodo: "semana", semana: semanas[0]?.start ?? "" })}
+          className="baz-touch-target"
           style={toggleBtnStyle(periodoAtual === "semana")}
         >
           Semana

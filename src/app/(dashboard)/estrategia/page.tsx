@@ -70,7 +70,7 @@ export default async function EstrategiaPage({
     return (
       <div className="baz-fade-up">
         <SectionTitle>Estratégia</SectionTitle>
-        <p style={{ color: "#B3261E", fontSize: 13 }}>Erro ao buscar dados: {error.message}</p>
+        <p style={{ color: C.erro, fontSize: 13 }}>Erro ao buscar dados: {error.message}</p>
       </div>
     );
   }

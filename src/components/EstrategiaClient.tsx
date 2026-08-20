@@ -226,11 +226,17 @@ export function EstrategiaClient({
             </div>
             <div style={{ maxHeight: 320, overflowY: "auto", border: `1px solid ${C.linha}`, borderRadius: 3 }}>
               {posts.map((p) => (
-                <div
+                <button
                   key={p.id}
+                  type="button"
                   onClick={() => abrirFormPost(p.id)}
+                  aria-pressed={selectedPostId === p.id}
                   style={{
+                    width: "100%",
+                    textAlign: "left",
+                    font: "inherit",
                     padding: "8px 12px",
+                    border: "none",
                     borderBottom: `1px solid ${C.linha}`,
                     cursor: "pointer",
                     background: selectedPostId === p.id ? C.roxoTint : "transparent",
@@ -247,7 +253,7 @@ export function EstrategiaClient({
                       ✓
                     </span>
                   )}
-                </div>
+                </button>
               ))}
               {posts.length === 0 && (
                 <div style={{ ...labelStyle, padding: 12 }}>Nenhum post neste período.</div>
@@ -312,7 +318,7 @@ export function EstrategiaClient({
                   </div>
                 </div>
                 <label style={labelStyle}>
-                  Objetivo Estratégico <span style={{ color: "#B3261E" }}>*</span>
+                  Objetivo Estratégico <span style={{ color: C.erro }}>*</span>
                   <span style={{ display: "block", fontSize: 10, color: C.cinza, marginTop: 2 }}>
                     Para QUEM o post é direcionado no funil — diferente do Objetivo de Engajamento acima, que é a
                     ação buscada. Define por qual critério a IA vai julgar esse post.
@@ -322,7 +328,7 @@ export function EstrategiaClient({
                     onChange={(e) => setFormDraft({ ...formDraft, objetivoEstrategico: e.target.value })}
                     style={{
                       ...selectStyle,
-                      borderColor: formDraft.objetivoEstrategico ? C.linha : "#B3261E",
+                      borderColor: formDraft.objetivoEstrategico ? C.linha : C.erro,
                     }}
                   >
                     <option value="">— selecione —</option>
@@ -382,7 +388,7 @@ export function EstrategiaClient({
                   </select>
                 </label>
                 {!formDraft.objetivoEstrategico && (
-                  <div style={{ fontSize: 11, color: "#B3261E" }}>
+                  <div style={{ fontSize: 11, color: C.erro }}>
                     Escolha o Objetivo Estratégico para poder salvar.
                   </div>
                 )}
@@ -405,13 +411,16 @@ export function EstrategiaClient({
         </div>
       </div>
 
-      <div style={{ background: C.branco, border: `1px solid ${C.linha}`, borderRadius: 4, padding: 20 }}>
-        <SectionTitle>Seguidores ganhos e perdidos — resumo do app</SectionTitle>
+      <details className="baz-accordion">
+        <summary className="baz-accordion-summary">
+          <SectionTitle tight>Seguidores ganhos e perdidos — resumo do app</SectionTitle>
+        </summary>
+        <div className="baz-accordion-body">
         <div style={{ ...labelStyle, marginBottom: 12 }}>
           Vem do Meta Business Suite (desktop) → Público → Tendências, filtrando pelo mesmo período mostrado
           abaixo. O período é sempre o que está selecionado no topo da tela (Mês ou Semana) — muda de lá, não aqui.
         </div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginBottom: 12 }}>
+        <div className="baz-row-3col-even" style={{ marginBottom: 12 }}>
           <div>
             <div style={labelStyle}>Período</div>
             <div
@@ -465,7 +474,7 @@ export function EstrategiaClient({
                 fontFamily: "'JetBrains Mono', monospace",
                 fontSize: 20,
                 fontWeight: 700,
-                color: taxaPerda > 60 ? "#B33" : C.preto,
+                color: taxaPerda > 60 ? C.erro : C.preto,
               }}
             >
               {taxaPerda.toFixed(0)}%
@@ -480,10 +489,14 @@ export function EstrategiaClient({
             <span style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 11, color: C.roxo }}>Salvo ✓</span>
           )}
         </div>
-      </div>
+        </div>
+      </details>
 
-      <div style={{ background: C.branco, border: `1px solid ${C.linha}`, borderRadius: 4, padding: 20 }}>
-        <SectionTitle>Melhor horário para postar</SectionTitle>
+      <details className="baz-accordion">
+        <summary className="baz-accordion-summary">
+          <SectionTitle tight>Melhor horário para postar</SectionTitle>
+        </summary>
+        <div className="baz-accordion-body">
         <div style={{ ...labelStyle, marginBottom: 8 }}>
           Vem da tela &quot;Horários de atividade dos seguidores&quot;, dentro de Insights → Público, no app —
           referente ao período {period.label}.
@@ -503,10 +516,14 @@ export function EstrategiaClient({
             <span style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 11, color: C.roxo }}>Salvo ✓</span>
           )}
         </div>
-      </div>
+        </div>
+      </details>
 
-      <div style={{ background: C.branco, border: `1px solid ${C.linha}`, borderRadius: 4, padding: 20 }}>
-        <SectionTitle>Contexto e datas importantes</SectionTitle>
+      <details className="baz-accordion">
+        <summary className="baz-accordion-summary">
+          <SectionTitle tight>Contexto e datas importantes</SectionTitle>
+        </summary>
+        <div className="baz-accordion-body">
         <div style={{ ...labelStyle, marginBottom: 12 }}>
           Cadastre quantas datas futuras quiser, de qualquer mês — nada aqui se apaga quando você adiciona uma
           nova. Cada nota aparece pra IA a partir da semana em que foi cadastrada. Clica num dia do calendário
@@ -585,7 +602,8 @@ export function EstrategiaClient({
             Adicionar
           </button>
         </div>
-      </div>
+        </div>
+      </details>
     </div>
   );
 }

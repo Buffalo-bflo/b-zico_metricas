@@ -58,9 +58,11 @@ export function RecomendacaoSection({
   };
 
   return (
-    <div style={{ background: C.branco, border: `1px solid ${C.linha}`, borderRadius: 4, padding: 20 }}>
-      <SectionTitle>Recomendação para a próxima semana</SectionTitle>
-
+    <details className="baz-accordion">
+      <summary className="baz-accordion-summary">
+        <SectionTitle tight>Recomendação para a próxima semana</SectionTitle>
+      </summary>
+      <div className="baz-accordion-body">
       <ol style={{ fontSize: 12, color: C.preto, paddingLeft: 18, marginBottom: 16, lineHeight: 1.8 }}>
         <li>Copie o prompt abaixo (já vem com os dados do mês preenchidos).</li>
         <li>
@@ -127,7 +129,7 @@ export function RecomendacaoSection({
         </button>
         {salvo && <span style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 11, color: C.roxo }}>Salvo ✓</span>}
       </div>
-      {erro && <div style={{ color: "#B3261E", fontSize: 12, marginTop: 8 }}>{erro}</div>}
+      {erro && <div style={{ color: C.erro, fontSize: 12, marginTop: 8 }}>{erro}</div>}
 
       {ultima && (
         <div style={{ marginTop: 20, paddingTop: 16, borderTop: `1px solid ${C.linha}` }}>
@@ -139,6 +141,7 @@ export function RecomendacaoSection({
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </details>
   );
 }
