@@ -32,8 +32,11 @@ export function buildWeeklyPrompt({
   melhorHorario: string;
   contexto: string;
 }): string {
-  const internos = marcados.filter((p) => p.origin !== "Parceria/Influencer");
-  const parcerias = marcados.filter((p) => p.origin === "Parceria/Influencer");
+  // "Agência" (Gustavo/Ari) é o único conteúdo que o analista de fato controla e pode
+  // repetir na estratégia. Parceria/Influencer e UGC/Cliente refletem o alcance de outra
+  // pessoa, não a estratégia de conteúdo da marca — por isso ficam fora do bloco principal.
+  const internos = marcados.filter((p) => p.origin === "Agência" || !p.origin);
+  const parcerias = marcados.filter((p) => p.origin && p.origin !== "Agência");
 
   const resumoInternos = internos
     .map(
@@ -50,9 +53,9 @@ export function buildWeeklyPrompt({
 
   const resumoParcerias = parcerias.length
     ? parcerias
-        .map((p) => `- [Parceria] "${p.description?.split("\n")[0].slice(0, 50)}" · Views: ${p.views}`)
+        .map((p) => `- [${p.origin}] "${p.description?.split("\n")[0].slice(0, 50)}" · Views: ${p.views}`)
         .join("\n")
-    : "Nenhum conteúdo de parceria marcado.";
+    : "Nenhum conteúdo de parceria/UGC marcado.";
 
   const naoMarcados = totalPosts - marcados.length;
   const saldo = seguidoresGanhos - seguidoresPerdidos;
@@ -62,10 +65,10 @@ export function buildWeeklyPrompt({
 
 ${GROWTH_CONTEXT}
 
-DADOS DE ${periodoLabel.toUpperCase()} — conteúdo INTERNO marcado e analisado pelo analista (${internos.length} de ${totalPosts} posts do período; ${naoMarcados} ainda sem marcação):
-${resumoInternos || "Nenhum post interno marcado ainda."}
+DADOS DE ${periodoLabel.toUpperCase()} — conteúdo de AGÊNCIA (produzido internamente por Gustavo/Ari) marcado e analisado pelo analista (${internos.length} de ${totalPosts} posts do período; ${naoMarcados} ainda sem marcação):
+${resumoInternos || "Nenhum post de agência marcado ainda."}
 
-CONTEÚDO DE PARCERIA/INFLUENCER no mesmo período (gera resultado pra Bázico, mas não é entrega do analista — mantido aqui só como contexto, não descartado):
+CONTEÚDO DE PARCERIA/INFLUENCER/UGC no mesmo período (gera resultado pra Bázico, mas não é entrega do analista — mantido aqui só como contexto, não descartado):
 ${resumoParcerias}
 
 SEGUIDORES GANHOS E PERDIDOS NO PERÍODO (via app Instagram, período: ${seguidoresPeriodo || "não informado"}):
@@ -77,7 +80,7 @@ ${melhorHorario || "Não informado."}
 CONTEXTO E DATAS IMPORTANTES PARA A PRÓXIMA SEMANA (informado pelo analista):
 ${contexto || "Nenhum contexto adicional informado."}
 
-TAREFA: com base principalmente no conteúdo INTERNO marcado acima (é o que o analista controla e pode repetir — conteúdo de parceria reflete o alcance do influencer, não a estratégia de conteúdo da marca), escreva uma recomendação objetiva para a próxima semana, no seguinte formato:
+TAREFA: com base principalmente no conteúdo de AGÊNCIA marcado acima (é o que o analista controla e pode repetir — conteúdo de parceria/UGC reflete o alcance de outra pessoa, não a estratégia de conteúdo da marca), escreva uma recomendação objetiva para a próxima semana, no seguinte formato:
 
 1. LEITURA DA SEMANA — o que os dados marcados sugerem que funcionou ou não, e por quê (2-3 frases, direto, sem enrolação).
 2. FOCOS SUGERIDOS — 3 a 5 temas/linhas editoriais pra priorizar essa semana, considerando o contexto/datas informado e o melhor horário pra postar.

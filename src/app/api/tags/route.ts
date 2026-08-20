@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
       content_mode: contentMode || null,
       engagement_objective: engagementObjective || null,
       strategic_objective: strategicObjective || null,
-      origin: origin || "Interno",
+      origin: origin || "Agência",
       hypothesis: hypothesis || null,
       hypothesis_status: hypothesisStatus || "Observar",
       actual_result: actualResult || null,

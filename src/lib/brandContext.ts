@@ -24,6 +24,16 @@ OBJETIVO: REATIVAÇÃO (reconectar especificamente com cliente que JÁ comprou e
 - Métrica prioritária: engajamento de quem já é seguidor/cliente antigo (comentário, clique no link), não alcance de não-seguidor.
 - Limite honesto: o app hoje não sabe, entre quem interagiu, quem é de fato cliente inativo há 12+ meses — isso exige cruzar com base de clientes (CRM/e-commerce), que ainda não está integrada. Até lá, a leitura de reativação é qualitativa, não comprovada por dado de venda.
 
+OBJETIVO: FIDELIZAÇÃO (aprofundar a relação com quem JÁ compra ativamente da Bázico — diferente de Reativação, que é sobre quem sumiu)
+- Público-alvo: cliente ativo, comprando com alguma frequência, sem sinal de abandono.
+- Métrica prioritária: engajamento de cliente recorrente (uso de benefício BaziPass, comentário de quem já compra), taxa de recompra — não alcance de não-seguidor.
+- Tom: reconhecimento e recompensa pela relação já existente (ex: benefício exclusivo, acesso antecipado), não conquista de alguém novo.
+
+OBJETIVO: INSTITUCIONAL (não busca mover ninguém no funil de compra — constrói o que a marca significa)
+- Não deve ser julgado por métrica de conversão nem de alcance de não-seguidor — o trabalho dele é reforçar valores, cultura, propósito e história da marca.
+- Métrica prioritária: nenhuma métrica de funil é adequada aqui; se houver leitura, é sobre tom dos comentários/sentimento, não volume.
+- Exemplos reais da Bázico: a história de fundação (o "QGzinho"), celebração de marco da empresa (aniversário do CEO).
+
 REGRA GERAL PARA A IA: conteúdo orgânico é um entre vários fatores que levam à venda — preço, estoque, prova social fora do Instagram, boca a boca também pesam. Nunca escrever como se um post tivesse "causado" uma venda ou fidelização — falar em "sinal direcional", nunca em prova.
 
 TAREFA: identificar o Objetivo Estratégico de cada post marcado (Aquisição / Reativação / Fidelização / Institucional) e aplicar o critério de sucesso correspondente.

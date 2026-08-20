@@ -96,7 +96,7 @@ export async function computeBaseline(janela: JanelaBaseline = "12m"): Promise<B
       continue;
     }
     const origem = origemPorPost[p.id];
-    if (origem && origem !== "Interno") {
+    if (origem && origem !== "Agência") {
       excluidos.push({ id: p.id, post_type: p.post_type, post_date: p.post_date, motivo: `Origem: ${origem}` });
       continue;
     }

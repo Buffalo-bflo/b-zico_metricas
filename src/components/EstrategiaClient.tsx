@@ -11,7 +11,9 @@ import {
   MODO_CONTEUDO_OPTS,
   OBJETIVO_OPTS,
   OBJETIVO_ESTRATEGICO_OPTS,
+  OBJETIVO_ESTRATEGICO_OPTS_AJUDA,
   ORIGEM_OPTS,
+  ORIGEM_OPTS_AJUDA,
   STATUS_HIP_OPTS,
 } from "@/lib/designTokens";
 import { fmtDate } from "@/lib/metrics";
@@ -39,7 +41,7 @@ const formDraftVazio = {
   modoConteudo: "",
   objetivos: [] as string[],
   objetivoEstrategico: "",
-  origem: "Interno",
+  origem: "Agência",
   hipotese: "",
   statusHip: "Observar",
   resultado: "",
@@ -91,7 +93,7 @@ export function EstrategiaClient({
             modoConteudo: t.content_mode ?? "",
             objetivos: t.engagement_objective ? t.engagement_objective.split(", ").filter(Boolean) : [],
             objetivoEstrategico: t.strategic_objective ?? "",
-            origem: t.origin ?? "Interno",
+            origem: t.origin ?? "Agência",
             hipotese: t.hypothesis ?? "",
             statusHip: t.hypothesis_status ?? "Observar",
             resultado: t.actual_result ?? "",
@@ -338,6 +340,11 @@ export function EstrategiaClient({
                       </option>
                     ))}
                   </select>
+                  {formDraft.objetivoEstrategico && (
+                    <span style={{ display: "block", fontSize: 10, color: C.roxo, marginTop: 4, lineHeight: 1.5 }}>
+                      {OBJETIVO_ESTRATEGICO_OPTS_AJUDA[formDraft.objetivoEstrategico]}
+                    </span>
+                  )}
                 </label>
                 <label style={labelStyle}>
                   Origem
@@ -352,6 +359,11 @@ export function EstrategiaClient({
                       </option>
                     ))}
                   </select>
+                  {formDraft.origem && (
+                    <span style={{ display: "block", fontSize: 10, color: C.cinza, marginTop: 4, lineHeight: 1.5 }}>
+                      {ORIGEM_OPTS_AJUDA[formDraft.origem]}
+                    </span>
+                  )}
                 </label>
                 <label style={labelStyle}>
                   Hipótese (por que performou assim)
