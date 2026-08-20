@@ -213,6 +213,67 @@ tbody tr:hover .baz-num {
   user-select: none;
 }
 
+/* Bookend do glifo "≠" — o cabeçalho já tinha a marca d'água pequena (130px); o
+   rodapé do dashboard ganha a mesma assinatura em escala grande, ecoando o
+   glifo do topo em vez de inventar um terceiro uso pra ele (ver DESIGN.md,
+   Named Rules do Glifo "≠"). Opacidade um pouco mais alta que a do cabeçalho
+   (5% vs 3.5%) porque a imagem é bem maior e precisa da mesma presença "quase
+   invisível" em proporção. */
+.baz-watermark-giant {
+  position: absolute;
+  right: -40px;
+  bottom: -70px;
+  width: min(42vw, 340px);
+  height: auto;
+  opacity: 0.05;
+  pointer-events: none;
+  user-select: none;
+  z-index: 0;
+}
+
+.baz-dashboard-footer {
+  position: relative;
+  overflow: hidden;
+  margin-top: 40px;
+  padding: 28px 24px 20px;
+  border-top: 1px solid var(--linha);
+  min-height: 130px;
+}
+.baz-dashboard-footer-inner {
+  position: relative;
+  z-index: 1;
+}
+
+/* Mesma receita de grão do cabeçalho (ver comentário acima de
+   .baz-dashboard-header::before) aplicada como o segundo — e último — extremo
+   do "momento autorado": cabeçalho e rodapé formam um par, o grão continua
+   fora de cards/tabelas. */
+.baz-dashboard-footer::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.9 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 180px 180px;
+  opacity: 0.035;
+  mix-blend-mode: multiply;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Entrada dos números de KPI — a "passada bolder" já anima o card inteiro
+   (.baz-stagger); aqui só o valor de dentro ganha um segundo passo, um pouco
+   atrasado, pra ele "assentar" depois do card em vez de chegar junto — um
+   único gesto extra de entrada, disparado uma vez por carregamento de tela,
+   nunca repetido depois disso. */
+@keyframes kpiSettle {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.baz-kpi-value {
+  animation: kpiSettle 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: 0.16s;
+}
+
 /* Textura do cabeçalho — um único momento autorado, reaproveitando o espaço já
    ocupado pela marca d'água "≠", nunca repetido em cards/tabelas. Sempre cinza
    puro (nunca roxo — a Rare Signal Rule proíbe preenchimento grande com a cor de
@@ -288,11 +349,18 @@ input:focus, select:focus, textarea:focus, button:focus-visible, a:focus-visible
   .baz-nav-controls {
     justify-content: space-between;
   }
+  .baz-dashboard-footer {
+    padding: 20px 12px 16px;
+    min-height: 100px;
+  }
+  .baz-watermark-giant {
+    width: 55vw;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .baz-fade-up, .baz-fade-in, .baz-stagger > *, .baz-card, .baz-tab::after, .baz-btn-primary, .baz-btn-secondary, .baz-accordion-summary::after,
-  .baz-icon-btn, .baz-btn-ghost, .baz-btn-ghost-muted, .baz-day-cell {
+  .baz-icon-btn, .baz-btn-ghost, .baz-btn-ghost-muted, .baz-day-cell, .baz-kpi-value {
     animation: none !important;
     transition: none !important;
   }

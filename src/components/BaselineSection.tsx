@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { SectionTitle } from "@/components/Brand";
+import { FormatIcon } from "@/components/FormatIcon";
 import { C, TIPO_COLORS, TYPE } from "@/lib/designTokens";
 import { fmt, fmtDate } from "@/lib/metrics";
 import type { Baseline, JanelaBaseline } from "@/lib/baseline";
@@ -104,8 +105,29 @@ export function BaselineSection({ baseline }: { baseline: Baseline }) {
               borderTop: `3px solid ${TIPO_COLORS[f.tipo] ?? C.roxo}`,
             }}
           >
-            <div style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 12, fontWeight: 700, color: C.preto, marginBottom: 8 }}>
-              {f.tipo} <span style={{ color: C.cinza, fontWeight: 400 }}>({f.qtd} posts)</span>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
+              <div
+                style={{
+                  width: 34,
+                  height: 34,
+                  borderRadius: 8,
+                  background: `${TIPO_COLORS[f.tipo] ?? C.roxo}14`,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  flexShrink: 0,
+                }}
+              >
+                <FormatIcon tipo={f.tipo} color={TIPO_COLORS[f.tipo] ?? C.roxo} />
+              </div>
+              <div>
+                <div style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 12, fontWeight: 700, color: C.preto }}>
+                  {f.tipo}
+                </div>
+                <div style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 10, color: C.cinza }}>
+                  {f.qtd} posts
+                </div>
+              </div>
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
               {[

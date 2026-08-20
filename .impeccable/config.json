@@ -20,6 +20,12 @@
         ],
         "createdAt": "2026-08-20T15:52:08.549Z",
         "reason": "piso de acessibilidade do iOS Safari (evita zoom automático ao focar campo), não é uma escolha de hierarquia tipográfica"
+      },
+      {
+        "rule": "overused-font",
+        "value": "montserrat",
+        "createdAt": "2026-08-20T21:06:41.326Z",
+        "reason": "Established brand identity per PRODUCT.md/DESIGN.md: ported literally from the Gustavo-approved prototype, pre-dates this session, named 'Digit Voice Rule' in DESIGN.md"
       }
     ]
   }

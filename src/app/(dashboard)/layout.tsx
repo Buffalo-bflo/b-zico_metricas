@@ -66,6 +66,24 @@ export default async function DashboardLayout({ children }: { children: React.Re
       </div>
 
       {children}
+
+      <footer className="baz-dashboard-footer">
+        <img src="/logo-diferente.png" alt="" aria-hidden="true" className="baz-watermark-giant" />
+        <div className="baz-dashboard-footer-inner">
+          <span
+            style={{
+              fontFamily: "'Montserrat', sans-serif",
+              fontWeight: 700,
+              fontSize: 11,
+              letterSpacing: "0.05em",
+              textTransform: "uppercase",
+              color: C.cinza,
+            }}
+          >
+            BÁZICO · Métricas orgânicas do Instagram · @sejabazico
+          </span>
+        </div>
+      </footer>
     </div>
   );
 }

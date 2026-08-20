@@ -86,6 +86,7 @@ export function KpiCard({
         {label}
       </div>
       <div
+        className="baz-kpi-value"
         style={{
           ...TYPE.display,
           color: valueColor || C.preto,
