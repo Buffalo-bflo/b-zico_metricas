@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { SectionTitle } from "@/components/Brand";
-import { C, selectStyle, btnPrimary, btnSecondary } from "@/lib/designTokens";
+import { C, selectStyle, btnPrimary, btnSecondary, TYPE } from "@/lib/designTokens";
 import { fmtDate } from "@/lib/metrics";
 
 export type Teste = {
@@ -328,12 +328,14 @@ export function TestesClient({ testesIniciais, posts }: { testesIniciais: Teste[
           <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
             <button
               onClick={() => { setEditandoId(t.id); setDraft({}); setErro(""); }}
+              className="baz-btn-ghost-muted"
               style={{ background: "transparent", border: "none", color: C.roxo, cursor: "pointer", fontSize: 11, padding: 0 }}
             >
               Atualizar status / resultado
             </button>
             <button
               onClick={() => excluir(t.id)}
+              className="baz-btn-ghost-muted"
               style={{ background: "transparent", border: "none", color: C.cinza, cursor: "pointer", fontSize: 11, padding: 0 }}
             >
               Excluir
@@ -347,18 +349,20 @@ export function TestesClient({ testesIniciais, posts }: { testesIniciais: Teste[
 
   return (
     <div className="baz-fade-up">
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
-        <SectionTitle>Calendário de testes</SectionTitle>
-        <button onClick={() => setCriando((v) => !v)} className="baz-btn-primary" style={btnPrimary}>
-          {criando ? "Cancelar" : "+ Novo teste"}
-        </button>
-      </div>
+      <div className="baz-stagger">
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
+          <SectionTitle>Calendário de testes</SectionTitle>
+          <button onClick={() => setCriando((v) => !v)} className="baz-btn-primary" style={btnPrimary}>
+            {criando ? "Cancelar" : "+ Novo teste"}
+          </button>
+        </div>
 
-      <p style={{ ...labelStyle, marginTop: -8, marginBottom: 18, maxWidth: 720, lineHeight: 1.6 }}>
-        Um teste compara dois grupos de posts variando <b>uma</b> coisa por vez. O critério de sucesso é definido
-        antes de começar e trava na data de início — é isso que separa um teste de verdade de uma justificativa
-        montada depois de ver o resultado.
-      </p>
+        <p style={{ ...labelStyle, marginTop: -8, marginBottom: 18, maxWidth: 720, lineHeight: 1.6 }}>
+          Um teste compara dois grupos de posts variando <b>uma</b> coisa por vez. O critério de sucesso é definido
+          antes de começar e trava na data de início — é isso que separa um teste de verdade de uma justificativa
+          montada depois de ver o resultado.
+        </p>
+      </div>
 
       {erro && (
         <div style={{ background: `${C.erro}14`, border: `1px solid ${C.erro}`, padding: "10px 12px", borderRadius: 4, fontSize: 12, color: C.preto, marginBottom: 14 }}>
@@ -484,7 +488,7 @@ export function TestesClient({ testesIniciais, posts }: { testesIniciais: Teste[
       )}
 
       <div style={{ marginTop: 20 }}>
-        <div style={{ fontSize: 12, fontWeight: 700, color: C.preto, marginBottom: 10 }}>
+        <div style={{ ...TYPE.subhead, color: C.preto, marginBottom: 12 }}>
           Em andamento e planejados ({emAndamento.length})
         </div>
         {emAndamento.length === 0 ? (
@@ -494,8 +498,8 @@ export function TestesClient({ testesIniciais, posts }: { testesIniciais: Teste[
         )}
       </div>
 
-      <div style={{ marginTop: 24 }}>
-        <div style={{ fontSize: 12, fontWeight: 700, color: C.preto, marginBottom: 10 }}>
+      <div style={{ marginTop: 32 }}>
+        <div style={{ ...TYPE.subhead, color: C.preto, marginBottom: 12 }}>
           Histórico de concluídos ({concluidos.length})
         </div>
         {concluidos.length === 0 ? (

@@ -18,14 +18,26 @@ colors:
 typography:
   display:
     fontFamily: "'JetBrains Mono', monospace"
-    fontSize: "26px"
+    fontSize: "32px"
     fontWeight: 700
     lineHeight: 1
+  stat:
+    fontFamily: "'JetBrains Mono', monospace"
+    fontSize: "22px"
+    fontWeight: 700
+  stat-small:
+    fontFamily: "'JetBrains Mono', monospace"
+    fontSize: "16px"
+    fontWeight: 700
   headline:
     fontFamily: "'Montserrat', sans-serif"
-    fontSize: "15px"
+    fontSize: "17px"
     fontWeight: 700
     letterSpacing: "-0.01em"
+  subhead:
+    fontFamily: "'Montserrat', sans-serif"
+    fontSize: "13px"
+    fontWeight: 700
   title:
     fontFamily: "'Montserrat', sans-serif"
     fontSize: "13px"
@@ -35,6 +47,11 @@ typography:
     fontSize: "12px"
     fontWeight: 400
   label:
+    fontFamily: "'Montserrat', sans-serif"
+    fontSize: "11px"
+    fontWeight: 700
+    letterSpacing: "0.05em"
+  micro:
     fontFamily: "'Montserrat', sans-serif"
     fontSize: "10px"
     fontWeight: 700
@@ -51,6 +68,8 @@ spacing:
   lg: "20px"
   xl: "24px"
   page: "28px"
+  section: "32px"
+  major-section: "40px"
 components:
   button-primary:
     backgroundColor: "{colors.preto}"
@@ -84,7 +103,7 @@ components:
   kpi-card:
     backgroundColor: "{colors.branco}"
     rounded: "{rounded.lg}"
-    padding: "18px 20px"
+    padding: "20px 24px"
 ---
 
 # Design System: Bázico Métricas
@@ -96,6 +115,8 @@ components:
 O sistema parte do próprio símbolo da marca Bázico, o "≠" (diferente) — já usado como marca d'água discreta no cabeçalho e como glifo ao lado dos títulos de seção. Esse símbolo é o fio condutor: um dashboard que se recusa a ser "mais um" painel de métricas genérico. A superfície é neutra e disciplinada (preto, branco, cinza, linhas finas) e o roxo aparece raro, só para marcar o que é distinto — exatamente como a marca usa o "≠" para dizer que a Bázico não é básica no sentido pejorativo, é essencial e diferente.
 
 O clima é discreto e editorial: pouca cor, muito espaço em branco, hierarquia por peso tipográfico em vez de decoração. Números — a matéria-prima de um app de métricas — ganham voz própria numa fonte monoespaçada (JetBrains Mono), separada do texto de interface (Montserrat), para que dado e rótulo nunca se confundam visualmente. Não há sombra em repouso; a superfície é plana e só reage ao toque (hover, foco), como uma folha de papel bem impressa, não uma interface "de app".
+
+> **Revisão "bolder" (20/08/2026):** a pedido do Gustavo, a escala de tipografia e espaçamento foi ampliada pra dar mais peso aos números e títulos principais, mais respiro entre blocos empilhados, e mais reação ao passar o mouse — mantendo fonte, cor e as regras nomeadas abaixo intocadas (não é uma repaginação, é a mesma identidade "mais confiante"). A escala formal agora vive em código como `TYPE`/`SPACING` em `src/lib/designTokens.ts`, importada nos componentes em vez de tamanhos soltos repetidos à mão.
 
 **Key Characteristics:**
 - Neutro por padrão, roxo por exceção — a cor de destaque é rara e por isso significa algo quando aparece.
@@ -136,19 +157,24 @@ Paleta quase monocromática (preto/branco/cinza/linha) com um único acento roxo
 **Character:** Montserrat carrega toda a voz de interface — leve nos pesos 300/400, assertiva no 700 — enquanto JetBrains Mono é reservado exclusivamente para números que representam dado real (métricas, datas, contagens). A dupla existe para que o olho nunca confunda "isto é um rótulo" com "isto é um número que importa".
 
 ### Hierarchy
-- **Display** (700, 26px, monoespaçada, line-height 1): o valor grande de um KpiCard — o número que a tela quer que você veja primeiro.
-- **Stat** (700, 20px, monoespaçada): o número "de apoio" — menor que o Display mas ainda em destaque. Usado em saldo de seguidores, taxa de perda, projeção de tendência, melhor/pior post. Unificado em 20px (antes havia um 18px isolado no melhor/pior post da Visão Geral, sem motivo pra ser diferente do resto).
-- **Headline** (700, 15px, -0.01em, Montserrat): título de seção, sempre acompanhado do glifo "≠" à esquerda.
+- **Display** (700, 32px, monoespaçada, line-height 1): o valor grande de um KpiCard — o número que a tela quer que você veja primeiro. Subiu de 26px na revisão "bolder" pra abrir mais distância do resto da escala.
+- **Stat** (700, 22px, monoespaçada): o número "de apoio" — menor que o Display mas ainda em destaque. Usado em saldo de seguidores, taxa de perda, projeção de tendência, resumo de testes.
+- **Stat Small** (700, 16px, monoespaçada): um degrau abaixo do Stat, pra números secundários dentro de um card já aninhado (ex.: melhor/pior post dentro do acordeão da Visão Geral, média por formato na Estratégia) — evita empilhar um card com destaque total dentro de outro card.
+- **Headline** (700, 17px, -0.01em, Montserrat): título de seção, sempre acompanhado do glifo "≠" à esquerda. Subiu de 15px pra marcar mais claramente onde cada tela/seção começa.
+- **Subhead** (700, 13px, Montserrat): título de bloco dentro de um card (ex. "Tendência diária da conta", contadores de lista na tela de Testes) — mesmo tamanho da aba de navegação ativa, mas com papel diferente (título de conteúdo, não controle).
 - **Title** (700/400, 13px, Montserrat): abas de navegação — 700 quando ativa, 400 quando inativa.
-- **Body** (300/400, 12px, Montserrat): texto corrido, células de tabela, descrições de post.
-- **Label** (700, 10–11px, letter-spacing 0.04–0.06em, caixa alta, cinza): cabeçalhos de coluna de tabela e rótulos acima de KPIs.
+- **Body** (300/400, 12px, Montserrat): texto corrido, células de tabela, descrições de post. Deixado do tamanho que estava de propósito — o contraste da revisão "bolder" vem de esticar o topo da escala, não de mexer no meio.
+- **Label** (700, 11px, letter-spacing 0.05em, caixa alta, cinza): rótulos acima de KPIs e de blocos — unificado em peso 700 (antes misturava 300/700 conforme o arquivo).
+- **Micro** (700, 10px, letter-spacing 0.05em, caixa alta, cinza): cabeçalhos de coluna de tabela — o piso da escala; nenhum texto no app deve ficar abaixo de 10px.
 
 ### Named Rules
 **The Digit Voice Rule.** Todo número que representa um dado (métrica, data, valor de gráfico) usa JetBrains Mono. Todo texto de interface (rótulo, botão, navegação, prosa) usa Montserrat. Nunca misturar as duas dentro da mesma função.
 
 ## Layout
 
-Grade simples baseada em flexbox/CSS grid, sem sistema de colunas rígido. Padding de página: 28px 24px no desktop, reduzindo para 16px 12px abaixo de 760px (único breakpoint do sistema). Padrão de duas colunas recorrente (`1.2fr/1fr` ou `1fr/1fr`, gap de 20px) que colapsa para uma coluna única no mobile. Cabeçalho do dashboard é flexível: logo + navegação à esquerda/centro, seletor de período e ações à direita, empilhando verticalmente em telas estreitas. Tabelas têm rolagem horizontal própria (`overflow-x: auto`) em vez de quebrar o layout da página. Densidade moderada: espaçamento generoso entre blocos (20–24px), mas compacto dentro deles (8–10px de padding em linhas de tabela).
+Grade simples baseada em flexbox/CSS grid, sem sistema de colunas rígido. Padding de página: 28px 24px no desktop, reduzindo para 16px 12px abaixo de 760px (único breakpoint do sistema). Padrão de duas colunas recorrente (`1.2fr/1fr` ou `1fr/1fr`, gap de 20px) que colapsa para uma coluna única no mobile. Cabeçalho do dashboard é flexível: logo + navegação à esquerda/centro, seletor de período e ações à direita, empilhando verticalmente em telas estreitas. Tabelas têm rolagem horizontal própria (`overflow-x: auto`) em vez de quebrar o layout da página. Densidade moderada: espaçamento apertado dentro de um bloco (8–16px), generoso entre cards de um mesmo bloco (20–24px).
+
+**Camada "section" (32px) e "major-section" (40px):** novas na revisão "bolder", usadas com moderação (1-2 vezes por tela) só pra separar blocos grandes já empilhados um do outro — ex. entre os acordeões da Estratégia, ou entre o bloco de KPIs e o acordeão de detalhamento na Visão Geral. Não substituem o espaçamento de 20-24px que já existia entre cards de um mesmo grupo; é uma camada acima, não uma inflação geral — o pedido era "mais respiro entre blocos", não "tudo mais espaçado".
 
 ## Elevation & Depth
 
@@ -156,6 +182,9 @@ Sistema plano em repouso — nenhum card, tabela ou botão tem sombra por padrã
 
 ### Shadow Vocabulary
 - **Elevação de hover** (`box-shadow: 0 8px 24px rgba(35,35,35,0.07)`): único uso de sombra no sistema, disparado só no `:hover` de cards (classe `.baz-card`).
+
+### Hover além de sombra (revisão "bolder")
+Nem toda reação a hover precisa de sombra — a maioria dos elementos novos usa só cor/movimento, continuando "flat": linha de tabela em hover realça os números (classe `.baz-num`, fica `roxo-escuro`) além do tint de fundo que já existia; dia do calendário sem nota ganha tint `roxo-tint`, dia já marcado (preenchido roxo sólido) usa `scale(1.08)` em vez de mais cor, já que não dá pra escurecer mais sem virar uma área grande de roxo (ver Rare Signal Rule).
 
 ### Named Rules
 **The Flat-At-Rest Rule.** Nenhum elemento tem sombra em seu estado padrão. Sombra é sempre uma resposta a uma ação do usuário (hover), nunca uma propriedade decorativa fixa.
@@ -177,7 +206,8 @@ Bordas são sempre finas (1px) exceto duas exceções deliberadas: a régua de 2
 - **Shape:** retângulo de canto suave (3px).
 - **Primary:** fundo `preto` (#232323), texto branco, padding 10px 16px, peso 700. Hover troca o fundo para `roxo-escuro` (#24174A); clique aplica `scale(0.97)`.
 - **Secondary:** fundo transparente, borda de 1px `preto`, texto `preto`, peso 300. Hover preenche com `preto` e texto vira branco (inversão total).
-- **Ghost (ação secundária de navegação, ex. "Sair"):** sem borda, texto `cinza`, peso 400 — a opção mais discreta do sistema.
+- **Ghost (ação secundária de navegação, ex. "Sair"):** sem borda, texto `cinza`, peso 400 — a opção mais discreta do sistema. Duas variantes de hover, adicionadas na revisão "bolder" pra nenhuma ação secundária ficar sem resposta ao passar o mouse: `.baz-btn-ghost` escurece pra `roxo` (ação leve, ex. links de navegação); `.baz-btn-ghost-muted` escurece pra `preto` com sublinhado (ações de saída/edição/remoção — "Sair", "Editar", "Excluir", remover nota — nunca vermelho, que continua reservado só a erro/qualidade de dado).
+- **Ícone sem texto (ex. setas do calendário anual):** classe `.baz-icon-btn` — fundo circular `roxo-tint` e texto `roxo` no hover, mesmo raciocínio do Ghost mas com uma área de toque redonda em vez de sublinhado.
 
 ### Chips / Badges
 - **Filtro/segmentado (pílula, 20px):** inativo = transparente com borda `preto`; ativo = preenchido `preto` com texto branco, ou (em contexto de gráfico) preenchido `roxo-tint` com texto e borda `roxo`.
@@ -188,7 +218,7 @@ Bordas são sempre finas (1px) exceto duas exceções deliberadas: a régua de 2
 - **Background:** branco (`#FFFFFF`) sobre fundo de tela `#FAFAFA`.
 - **Shadow Strategy:** nenhuma em repouso; ver Elevation & Depth.
 - **Border:** 1px `linha`, exceto a barra lateral de 3px do KpiCard (cor do indicador, padrão roxo). Banners de alerta/aviso: 1px na cor semântica ao redor de todo o card (nunca só à esquerda).
-- **Internal Padding:** 18–20px.
+- **Internal Padding:** 20px pros cards de apoio (tabela, gráfico); 20px 24px pro KpiCard — desde a revisão "bolder", o card mais importante da tela ganha um pouco mais de respiro que os cards de apoio, em vez de todos usarem o mesmo padding.
 
 ### Inputs / Fields
 - **Style:** fundo branco, borda 1px `linha`, canto de 3px (texto) ou 20px (select/pílula).

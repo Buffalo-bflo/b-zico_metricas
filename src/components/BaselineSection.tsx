@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { SectionTitle } from "@/components/Brand";
-import { C, TIPO_COLORS } from "@/lib/designTokens";
+import { C, TIPO_COLORS, TYPE } from "@/lib/designTokens";
 import { fmt, fmtDate } from "@/lib/metrics";
 import type { Baseline, JanelaBaseline } from "@/lib/baseline";
 import { mesLegivel } from "@/lib/dataQuality";
@@ -117,10 +117,10 @@ export function BaselineSection({ baseline }: { baseline: Baseline }) {
                 ["Salvos", f.mediaSaves],
               ].map(([label, valor]) => (
                 <div key={label as string}>
-                  <div style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 9, textTransform: "uppercase", color: C.cinza }}>
+                  <div style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 10, textTransform: "uppercase", color: C.cinza }}>
                     {label}
                   </div>
-                  <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 14, fontWeight: 700, color: C.preto }}>
+                  <div style={{ ...TYPE.statSmall, color: C.preto }}>
                     {fmt(Math.round(valor as number))}
                   </div>
                 </div>
@@ -134,6 +134,7 @@ export function BaselineSection({ baseline }: { baseline: Baseline }) {
         <div>
           <button
             onClick={() => setMostrarExcluidos((v) => !v)}
+            className="baz-btn-ghost-muted"
             style={{ background: "transparent", border: "none", color: C.roxo, cursor: "pointer", fontSize: 11, padding: 0 }}
           >
             {mostrarExcluidos ? "Esconder" : "Ver"} os {baseline.excluidos.length} posts excluídos do cálculo

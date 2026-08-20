@@ -62,6 +62,11 @@ tbody tr:hover { background: var(--roxo-tint); }
 .baz-stagger > *:nth-child(5) { animation-delay: 0.18s; }
 .baz-stagger > *:nth-child(6) { animation-delay: 0.22s; }
 
+/* A marca d'água "≠" tem opacidade fixa em 3,5% (.baz-watermark) — se ela entrar no
+   stagger do cabeçalho, a animação termina em opacity:1 (o "to" do fadeUp) e
+   sobrescreve esse valor, fazendo o glifo aparecer sólido. Excluída da animação. */
+.baz-stagger > .baz-watermark { animation: none; }
+
 .baz-card {
   transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease, border-color 0.2s ease;
 }
@@ -158,6 +163,47 @@ tbody tr:hover { background: var(--roxo-tint); }
 .baz-btn-secondary { transition: background 0.15s ease, border-color 0.15s ease; }
 .baz-btn-secondary:hover { background: var(--preto); color: var(--branco); }
 
+/* Passada "bolder" — vocabulário de hover reaproveitado (sem sombra em repouso, sem
+   preenchimento grande de roxo) pra alcançar botões que hoje não reagem a nada:
+   setas de navegação sem texto, ações secundárias soltas (Editar/Excluir/Sair) e os
+   dias do calendário anual. */
+.baz-icon-btn {
+  border-radius: 50%;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.baz-icon-btn:hover {
+  background: var(--roxo-tint);
+  color: var(--roxo);
+}
+
+/* Ação leve (ex.: "Atualizar status") vira roxo no hover, igual às abas. Ação de
+   saída/remoção ("muted") escurece pra preto com sublinhado — nunca vermelho, que
+   fica reservado só pra aviso de qualidade de dado e erro real (ver DESIGN.md). */
+.baz-btn-ghost { transition: color 0.15s ease; }
+.baz-btn-ghost:hover { color: var(--roxo); }
+.baz-btn-ghost-muted { transition: color 0.15s ease; }
+.baz-btn-ghost-muted:hover { color: var(--preto); text-decoration: underline; }
+
+/* Dia do calendário sem nota ganha o mesmo tint roxo de linha de tabela. Dia com
+   nota já é preenchido roxo sólido — não dá pra escurecer mais sem virar uma área
+   grande roxa, então o feedback ali é movimento (scale), não cor. */
+.baz-day-cell {
+  transition: background 0.15s ease, color 0.15s ease, transform 0.15s ease;
+}
+.baz-day-cell:hover:not(.baz-day-cell--marcado) {
+  background: var(--roxo-tint);
+  color: var(--roxo);
+}
+.baz-day-cell--marcado:hover {
+  transform: scale(1.08);
+}
+
+/* Número de célula de tabela (classe compartilhada) — ganha um leve realce quando a
+   linha inteira está em hover, reforçando o dado que mudou, não a linha toda. */
+tbody tr:hover .baz-num {
+  color: var(--roxo-escuro);
+}
+
 .baz-watermark {
   position: absolute;
   top: -30px; right: -10px;
@@ -165,6 +211,38 @@ tbody tr:hover { background: var(--roxo-tint); }
   opacity: 0.035;
   pointer-events: none;
   user-select: none;
+}
+
+/* Textura do cabeçalho — um único momento autorado, reaproveitando o espaço já
+   ocupado pela marca d'água "≠", nunca repetido em cards/tabelas. Sempre cinza
+   puro (nunca roxo — a Rare Signal Rule proíbe preenchimento grande com a cor de
+   destaque — e nunca creme, reservado a Stories/tooltip). O grão usa
+   mix-blend-mode: multiply de propósito: só pode escurecer a superfície clara,
+   nunca clarear ou embaçar, que é o que faria parecer sujeira em vez de textura. */
+.baz-dashboard-header::before {
+  content: '';
+  position: absolute;
+  top: -40px; right: -20px;
+  width: 420px; height: 220px;
+  background: radial-gradient(
+    ellipse at top right,
+    rgba(35, 35, 35, 0.05) 0%,
+    rgba(35, 35, 35, 0.02) 45%,
+    rgba(35, 35, 35, 0) 75%
+  );
+  pointer-events: none;
+  z-index: 0;
+}
+.baz-dashboard-header::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.9 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 180px 180px;
+  opacity: 0.035;
+  mix-blend-mode: multiply;
+  pointer-events: none;
+  z-index: 0;
 }
 
 input:focus, select:focus, textarea:focus, button:focus-visible, a:focus-visible, summary:focus-visible {
@@ -213,7 +291,8 @@ input:focus, select:focus, textarea:focus, button:focus-visible, a:focus-visible
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .baz-fade-up, .baz-fade-in, .baz-stagger > *, .baz-card, .baz-tab::after, .baz-btn-primary, .baz-btn-secondary, .baz-accordion-summary::after {
+  .baz-fade-up, .baz-fade-in, .baz-stagger > *, .baz-card, .baz-tab::after, .baz-btn-primary, .baz-btn-secondary, .baz-accordion-summary::after,
+  .baz-icon-btn, .baz-btn-ghost, .baz-btn-ghost-muted, .baz-day-cell {
     animation: none !important;
     transition: none !important;
   }

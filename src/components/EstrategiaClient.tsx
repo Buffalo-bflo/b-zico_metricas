@@ -15,6 +15,7 @@ import {
   ORIGEM_OPTS,
   ORIGEM_OPTS_AJUDA,
   STATUS_HIP_OPTS,
+  TYPE,
 } from "@/lib/designTokens";
 import { fmtDate } from "@/lib/metrics";
 import { YearCalendar } from "@/components/YearCalendar";
@@ -216,7 +217,7 @@ export function EstrategiaClient({
   const labelStyle = { fontFamily: "'Montserrat', sans-serif", fontSize: 11, color: C.cinza };
 
   return (
-    <div className="baz-fade-in" style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+    <div className="baz-fade-in" style={{ display: "flex", flexDirection: "column", gap: 32 }}>
       <div style={{ background: C.branco, border: `1px solid ${C.linha}`, borderRadius: 4, padding: 20 }}>
         <SectionTitle>
           Marcar conteúdo — {qtdMarcados} de {posts.length} posts
@@ -472,7 +473,7 @@ export function EstrategiaClient({
             <div style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 10, color: C.cinza, textTransform: "uppercase" }}>
               Saldo líquido
             </div>
-            <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 20, fontWeight: 700, color: C.roxo }}>
+            <div style={{ ...TYPE.stat, color: C.roxo }}>
               {saldo > 0 ? "+" : ""}
               {saldo}
             </div>
@@ -483,9 +484,7 @@ export function EstrategiaClient({
             </div>
             <div
               style={{
-                fontFamily: "'JetBrains Mono', monospace",
-                fontSize: 20,
-                fontWeight: 700,
+                ...TYPE.stat,
                 color: taxaPerda > 60 ? C.erro : C.preto,
               }}
             >
@@ -576,6 +575,7 @@ export function EstrategiaClient({
                 </div>
                 <button
                   onClick={() => removerNota(n.id)}
+                  className="baz-btn-ghost-muted"
                   style={{ background: "transparent", border: "none", color: C.cinza, cursor: "pointer", fontSize: 12 }}
                 >
                   remover

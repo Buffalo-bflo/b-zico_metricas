@@ -41,14 +41,16 @@ export function YearCalendar({ notas, onDayClick }: { notas: Nota[]; onDayClick?
       <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 14, marginBottom: 12 }}>
         <button
           onClick={() => setAno((a) => a - 1)}
-          style={{ background: "transparent", border: "none", color: C.cinza, cursor: "pointer", fontSize: 16 }}
+          className="baz-icon-btn baz-touch-target"
+          style={{ background: "transparent", border: "none", color: C.cinza, cursor: "pointer", fontSize: 16, width: 28, height: 28 }}
         >
           ‹
         </button>
         <div style={{ fontFamily: "'Montserrat', sans-serif", fontWeight: 700, fontSize: 14, color: C.preto }}>{ano}</div>
         <button
           onClick={() => setAno((a) => a + 1)}
-          style={{ background: "transparent", border: "none", color: C.cinza, cursor: "pointer", fontSize: 16 }}
+          className="baz-icon-btn baz-touch-target"
+          style={{ background: "transparent", border: "none", color: C.cinza, cursor: "pointer", fontSize: 16, width: 28, height: 28 }}
         >
           ›
         </button>
@@ -82,7 +84,7 @@ export function YearCalendar({ notas, onDayClick }: { notas: Nota[]; onDayClick?
                 {DIAS_SEMANA.map((d, i) => (
                   <div
                     key={i}
-                    style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, color: C.cinza, textAlign: "center" }}
+                    style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: C.cinza, textAlign: "center" }}
                   >
                     {d}
                   </div>
@@ -102,6 +104,7 @@ export function YearCalendar({ notas, onDayClick }: { notas: Nota[]; onDayClick?
                       disabled={!onDayClick}
                       title={notasDia?.join(" · ")}
                       aria-label={temNota ? `${iso} — ${notasDia!.join(" · ")}` : iso}
+                      className={`baz-day-cell${temNota ? " baz-day-cell--marcado" : ""}`}
                       style={{
                         aspectRatio: "1",
                         display: "flex",

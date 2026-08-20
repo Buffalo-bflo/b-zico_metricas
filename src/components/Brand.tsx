@@ -1,4 +1,4 @@
-import { C } from "@/lib/designTokens";
+import { C, TYPE } from "@/lib/designTokens";
 
 export function Diff({ tipo }: { tipo?: "big" | "normal" }) {
   return (
@@ -20,10 +20,7 @@ export function SectionTitle({ children, tight }: { children: React.ReactNode; t
   return (
     <h2
       style={{
-        fontFamily: "'Montserrat', sans-serif",
-        fontWeight: 700,
-        fontSize: 15,
-        letterSpacing: "-0.01em",
+        ...TYPE.headline,
         color: C.preto,
         margin: tight ? 0 : "0 0 14px 0",
         display: "flex",
@@ -41,11 +38,15 @@ export function KpiCard({
   value,
   sub,
   accent,
+  valueColor,
 }: {
   label: string;
   value: React.ReactNode;
   sub?: React.ReactNode;
   accent?: string;
+  /** Cor do número principal — default preto. Usado quando o valor carrega um sinal
+      semântico próprio (ex.: taxa de perda alta em vermelho, saldo positivo em roxo). */
+  valueColor?: string;
 }) {
   return (
     <div
@@ -54,9 +55,9 @@ export function KpiCard({
         background: C.branco,
         border: `1px solid ${C.linha}`,
         borderRadius: 6,
-        padding: "18px 20px",
-        flex: "1 1 150px",
-        minWidth: 150,
+        padding: "20px 24px",
+        flex: "1 1 160px",
+        minWidth: 160,
         position: "relative",
         overflow: "hidden",
       }}
@@ -79,18 +80,15 @@ export function KpiCard({
           letterSpacing: "0.06em",
           textTransform: "uppercase",
           color: C.cinza,
-          marginBottom: 6,
+          marginBottom: 8,
         }}
       >
         {label}
       </div>
       <div
         style={{
-          fontFamily: "'JetBrains Mono', monospace",
-          fontWeight: 700,
-          fontSize: 26,
-          color: C.preto,
-          lineHeight: 1,
+          ...TYPE.display,
+          color: valueColor || C.preto,
         }}
       >
         {value}
@@ -101,7 +99,7 @@ export function KpiCard({
             fontFamily: "'Montserrat', sans-serif",
             fontSize: 11,
             color: C.roxo,
-            marginTop: 6,
+            marginTop: 8,
           }}
         >
           {sub}

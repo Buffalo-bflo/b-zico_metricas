@@ -119,19 +119,19 @@ export default async function StoriesPage({
                   <td style={{ padding: "9px 10px", fontFamily: "'Montserrat', sans-serif", fontSize: 12, color: C.preto, whiteSpace: "nowrap" }}>
                     {s.media_type ? (MEDIA_TYPE_LABEL[s.media_type] ?? s.media_type) : "—"}
                   </td>
-                  <td style={{ padding: "9px 10px", textAlign: "right", fontFamily: "'JetBrains Mono', monospace", fontSize: 12, fontWeight: 700, color: C.preto }}>
+                  <td className="baz-num" style={{ padding: "9px 10px", textAlign: "right", fontFamily: "'JetBrains Mono', monospace", fontSize: 12, fontWeight: 700, color: C.preto }}>
                     {fmt(s.views)}
                   </td>
-                  <td style={{ padding: "9px 10px", textAlign: "right", fontFamily: "'JetBrains Mono', monospace", fontSize: 12, color: C.cinza }}>
+                  <td className="baz-num" style={{ padding: "9px 10px", textAlign: "right", fontFamily: "'JetBrains Mono', monospace", fontSize: 12, color: C.cinza }}>
                     {fmt(s.reach)}
                   </td>
-                  <td style={{ padding: "9px 10px", textAlign: "right", fontFamily: "'JetBrains Mono', monospace", fontSize: 12, color: C.cinza }}>
+                  <td className="baz-num" style={{ padding: "9px 10px", textAlign: "right", fontFamily: "'JetBrains Mono', monospace", fontSize: 12, color: C.cinza }}>
                     {fmt(s.link_clicks)}
                   </td>
-                  <td style={{ padding: "9px 10px", textAlign: "right", fontFamily: "'JetBrains Mono', monospace", fontSize: 12, color: C.cinza }}>
+                  <td className="baz-num" style={{ padding: "9px 10px", textAlign: "right", fontFamily: "'JetBrains Mono', monospace", fontSize: 12, color: C.cinza }}>
                     {fmt(s.replies)}
                   </td>
-                  <td style={{ padding: "9px 10px", textAlign: "right", fontFamily: "'JetBrains Mono', monospace", fontSize: 12, color: C.roxo }}>
+                  <td className="baz-num" style={{ padding: "9px 10px", textAlign: "right", fontFamily: "'JetBrains Mono', monospace", fontSize: 12, color: C.roxo }}>
                     {s.follows > 0 ? `+${s.follows}` : "—"}
                   </td>
                   <td style={{ padding: "9px 10px", fontFamily: "'Montserrat', sans-serif", fontSize: 12, color: C.cinza, maxWidth: 220 }}>

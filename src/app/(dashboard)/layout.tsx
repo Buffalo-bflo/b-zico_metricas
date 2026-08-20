@@ -16,7 +16,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
       }}
     >
       <div
-        className="baz-dashboard-header"
+        className="baz-dashboard-header baz-stagger"
         style={{
           display: "flex",
           justifyContent: "space-between",

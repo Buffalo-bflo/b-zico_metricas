@@ -1,5 +1,5 @@
 import { SectionTitle } from "@/components/Brand";
-import { C } from "@/lib/designTokens";
+import { C, TYPE } from "@/lib/designTokens";
 import { fmt } from "@/lib/metrics";
 import { weekLabel } from "@/lib/weeks";
 import type { Projecao } from "@/lib/projection";
@@ -86,7 +86,7 @@ export function ProjecaoSection({
                   <div style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.05em", color: C.cinza, marginBottom: 4 }}>
                     {METRIC_LABELS[p.metric_type]}
                   </div>
-                  <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 18, fontWeight: 700, color: C.preto }}>
+                  <div style={{ ...TYPE.statSmall, color: C.preto }}>
                     ~{fmt(p.mediaSemanal)}
                   </div>
                   <div style={{ fontSize: 10, color: C.cinza }}>última semana: {fmt(p.ultimaSemanaCompleta)}</div>
@@ -107,25 +107,25 @@ export function ProjecaoSection({
         </div>
         <div style={{ display: "flex", gap: 20, flexWrap: "wrap" }}>
           <div>
-            <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 20, fontWeight: 700, color: C.preto }}>
+            <div style={{ ...TYPE.stat, color: C.preto }}>
               {testesResumo.total}
             </div>
             <div style={{ fontSize: 11, color: C.cinza }}>posts marcados</div>
           </div>
           <div>
-            <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 20, fontWeight: 700, color: C.roxo }}>
+            <div style={{ ...TYPE.stat, color: C.roxo }}>
               {testesResumo.confirmadas}
             </div>
             <div style={{ fontSize: 11, color: C.cinza }}>hipóteses confirmadas</div>
           </div>
           <div>
-            <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 20, fontWeight: 700, color: C.erro }}>
+            <div style={{ ...TYPE.stat, color: C.erro }}>
               {testesResumo.refutadas}
             </div>
             <div style={{ fontSize: 11, color: C.cinza }}>hipóteses refutadas</div>
           </div>
           <div>
-            <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 20, fontWeight: 700, color: C.cinza }}>
+            <div style={{ ...TYPE.stat, color: C.cinza }}>
               {testesResumo.observando}
             </div>
             <div style={{ fontSize: 11, color: C.cinza }}>ainda em observação</div>

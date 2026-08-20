@@ -262,42 +262,43 @@ export function CompararClient({
 
   return (
     <div className="baz-fade-up">
-      <SectionTitle>Comparar {granularidade === "mes" ? "meses" : "semanas"}</SectionTitle>
+      <div className="baz-stagger">
+        <SectionTitle>Comparar {granularidade === "mes" ? "meses" : "semanas"}</SectionTitle>
 
-      <div
-        style={{
-          background: C.branco,
-          border: `1px solid ${C.linha}`,
-          borderRadius: 6,
-          padding: "14px 18px",
-          marginBottom: 20,
-        }}
-      >
-        <div style={{ display: "flex", gap: 4 }}>
-          {(["mes", "semana"] as const).map((g) => (
-            <button
-              key={g}
-              onClick={() => setGranularidade(g)}
-              className="baz-touch-target"
-              style={{
-                fontFamily: "'Montserrat', sans-serif",
-                fontSize: 12,
-                fontWeight: granularidade === g ? 700 : 400,
-                padding: "6px 14px",
-                background: granularidade === g ? C.roxo : "transparent",
-                color: granularidade === g ? C.branco : C.preto,
-                border: `1px solid ${C.roxo}`,
-                borderRadius: 20,
-                cursor: "pointer",
-              }}
-            >
-              {g === "mes" ? "Por mês" : "Por semana"}
-            </button>
-          ))}
-        </div>
+        <div
+          style={{
+            background: C.branco,
+            border: `1px solid ${C.linha}`,
+            borderRadius: 6,
+            padding: "14px 18px",
+            marginBottom: 20,
+          }}
+        >
+          <div style={{ display: "flex", gap: 4 }}>
+            {(["mes", "semana"] as const).map((g) => (
+              <button
+                key={g}
+                onClick={() => setGranularidade(g)}
+                className="baz-touch-target"
+                style={{
+                  fontFamily: "'Montserrat', sans-serif",
+                  fontSize: 12,
+                  fontWeight: granularidade === g ? 700 : 400,
+                  padding: "6px 14px",
+                  background: granularidade === g ? C.roxo : "transparent",
+                  color: granularidade === g ? C.branco : C.preto,
+                  border: `1px solid ${C.roxo}`,
+                  borderRadius: 20,
+                  cursor: "pointer",
+                }}
+              >
+                {g === "mes" ? "Por mês" : "Por semana"}
+              </button>
+            ))}
+          </div>
 
-        <div style={{ marginTop: 14, paddingTop: 14, borderTop: `1px solid ${C.linha}`, display: "flex", flexDirection: "column", gap: 10 }}>
-          {resolvidos.map((p, i) => (
+          <div style={{ marginTop: 14, paddingTop: 14, borderTop: `1px solid ${C.linha}`, display: "flex", flexDirection: "column", gap: 10 }}>
+            {resolvidos.map((p, i) => (
             <div
               key={p.key}
               style={{
@@ -346,6 +347,7 @@ export function CompararClient({
             <p style={{ ...linhaStyle, margin: 0 }}>Máximo de 4 períodos — remova um pra trocar.</p>
           )}
         </div>
+      </div>
       </div>
 
       {granularidade === "semana" && (
@@ -434,6 +436,7 @@ export function CompararClient({
                   {dadosOrdenados.map((m) => (
                     <td
                       key={m.start}
+                      className="baz-num"
                       style={{
                         padding: "9px 10px",
                         textAlign: "right",
@@ -465,6 +468,7 @@ export function CompararClient({
                       return (
                         <td
                           key={m.start}
+                          className="baz-num"
                           style={{
                             padding: "9px 10px",
                             textAlign: "right",
@@ -486,7 +490,7 @@ export function CompararClient({
                     <tr style={{ borderBottom: `1px solid ${C.linha}` }}>
                       <td style={{ padding: "9px 10px", fontSize: 12, color: C.preto }}>Seguidores ganhos (manual)</td>
                       {dadosOrdenados.map((m) => (
-                        <td key={m.start} style={{ padding: "9px 10px", textAlign: "right", fontFamily: "'JetBrains Mono', monospace", fontSize: 12, color: C.preto }}>
+                        <td key={m.start} className="baz-num" style={{ padding: "9px 10px", textAlign: "right", fontFamily: "'JetBrains Mono', monospace", fontSize: 12, color: C.preto }}>
                           {m.seguidoresManual ? fmt(m.seguidoresManual.ganhos) : "—"}
                         </td>
                       ))}
@@ -494,7 +498,7 @@ export function CompararClient({
                     <tr style={{ borderBottom: `1px solid ${C.linha}` }}>
                       <td style={{ padding: "9px 10px", fontSize: 12, color: C.preto }}>Seguidores perdidos (manual)</td>
                       {dadosOrdenados.map((m) => (
-                        <td key={m.start} style={{ padding: "9px 10px", textAlign: "right", fontFamily: "'JetBrains Mono', monospace", fontSize: 12, color: C.preto }}>
+                        <td key={m.start} className="baz-num" style={{ padding: "9px 10px", textAlign: "right", fontFamily: "'JetBrains Mono', monospace", fontSize: 12, color: C.preto }}>
                           {m.seguidoresManual ? fmt(m.seguidoresManual.perdidos) : "—"}
                         </td>
                       ))}

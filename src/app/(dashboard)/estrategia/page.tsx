@@ -131,7 +131,7 @@ export default async function EstrategiaPage({
   const confiavel = periodoConfiavel(period.start, qualidade.corte);
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: 32 }}>
       {!confiavel && <AvisoQualidade corte={qualidade.corte} periodoLabel={period.label} />}
       <EstrategiaClient
         posts={doPeriodo}

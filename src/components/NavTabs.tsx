@@ -59,6 +59,7 @@ export default function NavTabs({ months }: { months: string[] }) {
         </a>
         <button
           onClick={sair}
+          className="baz-btn-ghost-muted baz-touch-target"
           style={{
             fontFamily: "'Montserrat', sans-serif",
             fontWeight: 400,

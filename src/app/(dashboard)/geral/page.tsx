@@ -2,7 +2,7 @@ import { supabaseServer } from "@/lib/supabase/server";
 import { SectionTitle, KpiCard } from "@/components/Brand";
 import { FormatBarChart } from "@/components/FormatBarChart";
 import { DailyTrendChart, type DailyPoint } from "@/components/DailyTrendChart";
-import { C, TIPO_COLORS } from "@/lib/designTokens";
+import { C, TIPO_COLORS, TYPE } from "@/lib/designTokens";
 import { fmt, fmtDate, median } from "@/lib/metrics";
 import { resolvePeriod, type PeriodSearchParams } from "@/lib/period";
 import { avaliarQualidade, periodoConfiavel } from "@/lib/dataQuality";
@@ -111,10 +111,12 @@ export default async function GeralPage({
 
   return (
     <div className="baz-fade-up">
-      <SectionTitle>Visão Geral</SectionTitle>
-      <p style={{ color: C.cinza, fontSize: 12, marginTop: -8, marginBottom: 20 }}>
-        {period.label} · {doMes.length} posts de feed
-      </p>
+      <div className="baz-stagger">
+        <SectionTitle>Visão Geral</SectionTitle>
+        <p style={{ color: C.cinza, fontSize: 12, marginTop: -8, marginBottom: 20 }}>
+          {period.label} · {doMes.length} posts de feed
+        </p>
+      </div>
 
       {!periodoConfiavel(period.start, qualidade.corte) && (
         <AvisoQualidade corte={qualidade.corte} periodoLabel={period.label} />
@@ -130,9 +132,9 @@ export default async function GeralPage({
         <KpiCard label="Novos Seguidores (via posts)" value={fmt(totais.novosSeguidores)} accent={C.roxoEscuro} />
       </div>
 
-      <details className="baz-accordion" style={{ marginBottom: 24 }}>
+      <details className="baz-accordion" style={{ marginBottom: 32 }}>
         <summary className="baz-accordion-summary">
-          <div style={{ fontFamily: "'Montserrat', sans-serif", fontWeight: 700, fontSize: 15, color: C.preto }}>
+          <div style={{ ...TYPE.headline, color: C.preto }}>
             Detalhamento por formato e destaques do período
           </div>
         </summary>
@@ -160,7 +162,7 @@ export default async function GeralPage({
               <div style={{ fontSize: 13, color: C.preto, marginBottom: 2 }}>
                 {melhor.description?.split("\n")[0].slice(0, 70)}
               </div>
-              <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 20, fontWeight: 700, color: C.roxo }}>
+              <div style={{ ...TYPE.statSmall, color: C.roxo }}>
                 {fmt(melhor.views)} views
               </div>
               <div style={{ fontSize: 11, color: C.cinza }}>
@@ -176,7 +178,7 @@ export default async function GeralPage({
               <div style={{ fontSize: 13, color: C.preto, marginBottom: 2 }}>
                 {pior.description?.split("\n")[0].slice(0, 70)}
               </div>
-              <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 20, fontWeight: 700, color: C.cinza }}>
+              <div style={{ ...TYPE.statSmall, color: C.cinza }}>
                 {fmt(pior.views)} views
               </div>
               <div style={{ fontSize: 11, color: C.cinza }}>

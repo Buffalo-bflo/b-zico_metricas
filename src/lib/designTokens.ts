@@ -25,6 +25,34 @@ export const TIPO_COLORS: Record<string, string> = {
 export const FONT_SANS = "'Montserrat', sans-serif";
 export const FONT_MONO = "'JetBrains Mono', monospace";
 
+// Escala de tipografia formalizada na "passada bolder" (20/08/2026) — antes cada
+// tamanho era um literal repetido à mão em cada arquivo (26/20/18/14 todos fazendo o
+// papel de "número grande" sem uma régua única). Display e Stat sobem pra dar mais
+// peso aos números principais; Body/Label/Micro ficam como estavam de propósito —
+// o contraste vem de esticar o topo da escala, não de inflar tudo por igual.
+export const TYPE = {
+  display: { fontFamily: FONT_MONO, fontWeight: 700, fontSize: 32, lineHeight: 1 },
+  stat: { fontFamily: FONT_MONO, fontWeight: 700, fontSize: 22 },
+  statSmall: { fontFamily: FONT_MONO, fontWeight: 700, fontSize: 16 },
+  headline: { fontFamily: FONT_SANS, fontWeight: 700, fontSize: 17, letterSpacing: "-0.01em" },
+  subhead: { fontFamily: FONT_SANS, fontWeight: 700, fontSize: 13 },
+  body: { fontFamily: FONT_SANS, fontWeight: 400, fontSize: 12 },
+  label: { fontFamily: FONT_SANS, fontWeight: 700, fontSize: 11, letterSpacing: "0.05em" },
+  micro: { fontFamily: FONT_SANS, fontWeight: 700, fontSize: 10, letterSpacing: "0.05em", textTransform: "uppercase" },
+} satisfies Record<string, CSSProperties>;
+
+// Escala de espaçamento — o "tight" (8-16px) cobre item-a-item dentro de um bloco;
+// "section"/"majorSection" são novos, pra separar blocos empilhados numa mesma tela
+// (antes tudo ficava preso nos mesmos 20-24px, sem folga nenhuma entre um bloco e outro).
+export const SPACING = {
+  inline: 6,
+  tight: 12,
+  content: 16,
+  block: 20,
+  section: 32,
+  majorSection: 40,
+} as const;
+
 // Revisado com o Gustavo em 20/08/2026 a partir dos posts reais de melhor desempenho —
 // a lista antiga vinha do protótipo e tinha "Trends/Humor" e "Prova social/Cliente"
 // duplicando conceitos que já existiam em MODO_CONTEUDO_OPTS. Linha Editorial = sobre o
