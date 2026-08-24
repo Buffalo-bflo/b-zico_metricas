@@ -399,6 +399,11 @@ export function EstrategiaClient({
                       </option>
                     ))}
                   </select>
+                  <span style={{ display: "block", fontSize: 10, color: C.cinza, marginTop: 4, lineHeight: 1.5 }}>
+                    Confirmada = a hipótese bateu com o resultado. Refutada = resultado foi diferente do esperado.
+                    Padrão fixo = não é teste novo, é formato repetido de propósito — não comparar como hipótese
+                    isolada.
+                  </span>
                 </label>
                 {!formDraft.objetivoEstrategico && (
                   <div style={{ fontSize: 11, color: C.erro }}>

@@ -111,7 +111,7 @@ export const ORIGEM_OPTS_AJUDA: Record<string, string> = {
   "UGC/Cliente": "O cliente produziu sozinho; a Bázico pegou e repostou.",
 };
 export const ORIGEM_OPTS = Object.keys(ORIGEM_OPTS_AJUDA);
-export const STATUS_HIP_OPTS = ["Observar", "Confirmada", "Refutada"];
+export const STATUS_HIP_OPTS = ["Observar", "Confirmada", "Refutada", "Padrão fixo"];
 
 export const selectStyle: CSSProperties = {
   display: "block",
