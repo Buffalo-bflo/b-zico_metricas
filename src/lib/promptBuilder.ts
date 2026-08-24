@@ -38,18 +38,35 @@ export function buildWeeklyPrompt({
   const internos = marcados.filter((p) => p.origin === "Agência" || !p.origin);
   const parcerias = marcados.filter((p) => p.origin && p.origin !== "Agência");
 
+  // Separação simples entre "dado bruto" e "interpretação" dentro do campo Resultado real:
+  // pega só a primeira frase (até o primeiro . ! ou ?) como dado bruto, o resto (se houver)
+  // vira interpretação. Não é parsing inteligente — a separação de verdade acontece quando
+  // o Gustavo escrever o campo já nessa ordem (número/fato primeiro, leitura depois).
+  const splitResultado = (actualResult: string | null | undefined) => {
+    const texto = (actualResult || "").trim();
+    if (!texto) return { primeiraFrase: "", resto: "" };
+    const match = texto.match(/^(.*?[.!?])(?:\s+|\n)([\s\S]*)$/);
+    if (match) return { primeiraFrase: match[1].trim(), resto: match[2].trim() };
+    return { primeiraFrase: texto, resto: "" };
+  };
+
   const resumoInternos = internos
-    .map(
-      (p) =>
-        `- [${p.post_type}] "${p.description?.split("\n")[0].slice(0, 60)}" · Views: ${p.views} · OBJETIVO ESTRATÉGICO: ${
-          p.strategic_objective || "não informado"
-        } · Linha: ${p.editorial_line || "?"} · Modo: ${p.content_mode || "?"} · Hipótese: ${
-          p.hypothesis || "sem hipótese"
-        } (${p.hypothesis_status || "Observar"})${
-          p.actual_result ? ` · Resultado real (diferente do esperado): ${p.actual_result}` : ""
-        }`
-    )
-    .join("\n");
+    .map((p) => {
+      const titulo = p.description?.split("\n")[0].slice(0, 60) || "(sem legenda)";
+      const { primeiraFrase, resto } = splitResultado(p.actual_result);
+      const dadoBruto = `Views: ${p.views}.${primeiraFrase ? ` ${primeiraFrase}` : ""}`;
+      const interpretacao = resto || "Sem interpretação adicional registrada.";
+      return `POST: ${titulo}
+FORMATO: ${p.post_type}
+OBJETIVO ESTRATÉGICO: ${p.strategic_objective || "não informado"}
+LINHA EDITORIAL: ${p.editorial_line || "não informado"}
+MODO DE CONTEÚDO: ${p.content_mode || "não informado"}
+HIPÓTESE: ${p.hypothesis || "sem hipótese registrada"}
+STATUS: ${p.hypothesis_status || "Observar"}
+RESULTADO — DADO BRUTO: ${dadoBruto}
+RESULTADO — INTERPRETAÇÃO: ${interpretacao}`;
+    })
+    .join("\n\n");
 
   const resumoParcerias = parcerias.length
     ? parcerias
@@ -66,6 +83,9 @@ export function buildWeeklyPrompt({
 ${GROWTH_CONTEXT}
 
 DADOS DE ${periodoLabel.toUpperCase()} — conteúdo de AGÊNCIA (produzido internamente por Gustavo/Ari) marcado e analisado pelo analista (${internos.length} de ${totalPosts} posts do período; ${naoMarcados} ainda sem marcação):
+
+REGRA DE LEITURA: cada post abaixo tem os campos HIPÓTESE, STATUS, RESULTADO — DADO BRUTO e RESULTADO — INTERPRETAÇÃO separados. Ao ler STATUS = "Padrão fixo": não trate como experimento que funcionou ou não funcionou — trate como conteúdo recorrente de manutenção de categoria (ex: apresentação de produto novo), e avalie se essa categoria está tendo retorno consistente ao longo do tempo, não como teste pontual da semana.
+
 ${resumoInternos || "Nenhum post de agência marcado ainda."}
 
 CONTEÚDO DE PARCERIA/INFLUENCER/UGC no mesmo período (gera resultado pra Bázico, mas não é entrega do analista — mantido aqui só como contexto, não descartado):
