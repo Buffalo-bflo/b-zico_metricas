@@ -14,7 +14,7 @@ export default async function TestesPage() {
     supabase.from("testes").select("*").order("data_inicio", { ascending: false }),
     supabase
       .from("feed_posts")
-      .select("id, post_type, post_date, description")
+      .select("id, post_type, post_date, description, is_reels_teste")
       .order("post_date", { ascending: false })
       .limit(120),
   ]);
@@ -28,5 +28,20 @@ export default async function TestesPage() {
     );
   }
 
-  return <TestesClient testesIniciais={(testes ?? []) as Teste[]} posts={(posts ?? []) as PostOpcao[]} />;
+  const todasAsListas = (testes ?? []).flatMap((t) => [...t.posts_grupo_a, ...t.posts_grupo_b]);
+  const jaAgrupados = new Set(todasAsListas);
+
+  // Reels marcados como teste na aba Feed que ainda não foram colocados em nenhum
+  // Grupo A/B de um teste — ficam aqui esperando o Gustavo decidir o que fazer com eles.
+  const pendentes = (posts ?? []).filter(
+    (p) => (p as { is_reels_teste?: boolean }).is_reels_teste && !jaAgrupados.has(p.id)
+  );
+
+  return (
+    <TestesClient
+      testesIniciais={(testes ?? []) as Teste[]}
+      posts={(posts ?? []) as PostOpcao[]}
+      pendentesReelsTeste={pendentes as PostOpcao[]}
+    />
+  );
 }

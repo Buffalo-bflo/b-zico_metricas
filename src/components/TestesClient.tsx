@@ -87,7 +87,15 @@ function SeletorPosts({
   );
 }
 
-export function TestesClient({ testesIniciais, posts }: { testesIniciais: Teste[]; posts: PostOpcao[] }) {
+export function TestesClient({
+  testesIniciais,
+  posts,
+  pendentesReelsTeste = [],
+}: {
+  testesIniciais: Teste[];
+  posts: PostOpcao[];
+  pendentesReelsTeste?: PostOpcao[];
+}) {
   const [testes, setTestes] = useState(testesIniciais);
   const [criando, setCriando] = useState(false);
   const [form, setForm] = useState(formVazio);
@@ -363,6 +371,24 @@ export function TestesClient({ testesIniciais, posts }: { testesIniciais: Teste[
           montada depois de ver o resultado.
         </p>
       </div>
+
+      {pendentesReelsTeste.length > 0 && (
+        <div style={{ ...cardStyle, background: `${C.creme}55`, border: `1px solid ${C.creme}` }}>
+          <div style={{ ...TYPE.subhead, color: C.preto, marginBottom: 6 }}>
+            Reels teste aguardando agrupamento ({pendentesReelsTeste.length})
+          </div>
+          <p style={{ ...labelStyle, marginBottom: 10, lineHeight: 1.6 }}>
+            Marcados como &quot;Reels teste?&quot; na aba Feed. Não entram na fila de Marcar Conteúdo da Estratégia
+            até você decidir: coloque-os no Grupo A/B de um teste abaixo (novo ou existente) quando tiver o par pra
+            comparar.
+          </p>
+          {pendentesReelsTeste.map((p) => (
+            <div key={p.id} style={{ fontSize: 11, color: C.preto, padding: "4px 0", borderBottom: `1px solid ${C.linha}` }}>
+              {fmtDate(p.post_date)} · {p.post_type} · {(p.description ?? "").split("\n")[0].slice(0, 60)}
+            </div>
+          ))}
+        </div>
+      )}
 
       {erro && (
         <div style={{ background: `${C.erro}14`, border: `1px solid ${C.erro}`, padding: "10px 12px", borderRadius: 4, fontSize: 12, color: C.preto, marginBottom: 14 }}>

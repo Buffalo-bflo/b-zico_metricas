@@ -18,6 +18,7 @@ export type FeedTableRow = {
   saves: number;
   follows: number;
   paid_boost: boolean;
+  is_reels_teste: boolean;
 };
 
 const ORDENAR_OPTS: { key: keyof FeedTableRow; label: string }[] = [
@@ -40,6 +41,16 @@ export function FeedTable({ posts: postsIniciais, totalGeral }: { posts: FeedTab
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ postId, paidBoost: novoValor }),
+    });
+  };
+
+  const alternarReelsTeste = async (postId: string, valorAtual: boolean) => {
+    const novoValor = !valorAtual;
+    setPosts((ps) => ps.map((p) => (p.id === postId ? { ...p, is_reels_teste: novoValor } : p)));
+    await fetch("/api/feed-flags", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ postId, reelsTeste: novoValor }),
     });
   };
 
@@ -115,7 +126,7 @@ export function FeedTable({ posts: postsIniciais, totalGeral }: { posts: FeedTab
         <table>
           <thead>
             <tr style={{ borderBottom: `2px solid ${C.preto}` }}>
-              {["Data", "Tipo", "Descrição", "Views", "Alcance", "Curtidas", "Coment.", "Compart.", "Salvos", "+Seg.", "Impuls.?"].map(
+              {["Data", "Tipo", "Descrição", "Views", "Alcance", "Curtidas", "Coment.", "Compart.", "Salvos", "+Seg.", "Impuls.?", "Reels teste?"].map(
                 (h) => (
                   <th
                     key={h}
@@ -216,6 +227,14 @@ export function FeedTable({ posts: postsIniciais, totalGeral }: { posts: FeedTab
                     checked={p.paid_boost}
                     onChange={() => alternarImpulsionado(p.id, p.paid_boost)}
                     title="Marcar se esse post teve tráfego pago/impulsionamento — exclui ele da média de referência orgânica"
+                  />
+                </td>
+                <td style={{ padding: "9px 10px", textAlign: "right" }}>
+                  <input
+                    type="checkbox"
+                    checked={p.is_reels_teste}
+                    onChange={() => alternarReelsTeste(p.id, p.is_reels_teste)}
+                    title="Marcar se esse reels foi publicado só como teste (variação de gancho/formato) — some da fila de Marcar Conteúdo e passa a aguardar agrupamento na aba Testes"
                   />
                 </td>
               </tr>

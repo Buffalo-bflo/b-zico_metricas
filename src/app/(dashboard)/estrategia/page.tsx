@@ -41,7 +41,7 @@ export default async function EstrategiaPage({
   ] = await Promise.all([
     supabase
       .from("feed_posts")
-      .select("id, post_type, description, post_date, views")
+      .select("id, post_type, description, post_date, views, is_reels_teste")
       .gte("post_date", period.start)
       .lte("post_date", period.end)
       .order("post_date", { ascending: true }),
@@ -86,7 +86,10 @@ export default async function EstrategiaPage({
     );
   }
 
-  const doPeriodo = posts;
+  // Reels-teste (variações publicadas só pra experimentar) não entram na fila de
+  // marcação editorial nem nos totais daqui — ficam pendentes na aba Testes até
+  // serem agrupados em Grupo A/B.
+  const doPeriodo = posts.filter((p) => !p.is_reels_teste);
   const tags = Object.fromEntries((tagsData ?? []).map((t) => [t.post_id, t]));
   const notas = notasData ?? [];
 
