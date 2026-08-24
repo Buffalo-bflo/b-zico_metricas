@@ -38,33 +38,35 @@ export function buildWeeklyPrompt({
   const internos = marcados.filter((p) => p.origin === "Agência" || !p.origin);
   const parcerias = marcados.filter((p) => p.origin && p.origin !== "Agência");
 
-  // Separação simples entre "dado bruto" e "interpretação" dentro do campo Resultado real:
-  // pega só a primeira frase (até o primeiro . ! ou ?) como dado bruto, o resto (se houver)
-  // vira interpretação. Não é parsing inteligente — a separação de verdade acontece quando
-  // o Gustavo escrever o campo já nessa ordem (número/fato primeiro, leitura depois).
+  // Separação entre "dado bruto" e "interpretação" dentro do campo Resultado real: usa um
+  // separador literal "||" (opcional). Sem separador, o texto inteiro vira interpretação e o
+  // dado bruto fica só com as Views — esse é o caso mais comum. Nada de heurística de frase:
+  // é só um marcador fixo, sem parsing inteligente.
   const splitResultado = (actualResult: string | null | undefined) => {
     const texto = (actualResult || "").trim();
-    if (!texto) return { primeiraFrase: "", resto: "" };
-    const match = texto.match(/^(.*?[.!?])(?:\s+|\n)([\s\S]*)$/);
-    if (match) return { primeiraFrase: match[1].trim(), resto: match[2].trim() };
-    return { primeiraFrase: texto, resto: "" };
+    if (!texto) return { dadoBrutoExtra: "", interpretacao: "" };
+    const idx = texto.indexOf("||");
+    if (idx === -1) return { dadoBrutoExtra: "", interpretacao: texto };
+    return { dadoBrutoExtra: texto.slice(0, idx).trim(), interpretacao: texto.slice(idx + 2).trim() };
   };
 
   const resumoInternos = internos
     .map((p) => {
       const titulo = p.description?.split("\n")[0].slice(0, 60) || "(sem legenda)";
-      const { primeiraFrase, resto } = splitResultado(p.actual_result);
-      const dadoBruto = `Views: ${p.views}.${primeiraFrase ? ` ${primeiraFrase}` : ""}`;
-      const interpretacao = resto || "Sem interpretação adicional registrada.";
+      const { dadoBrutoExtra, interpretacao } = splitResultado(p.actual_result);
+      const dadoBruto = `Views: ${p.views}.${dadoBrutoExtra ? ` ${dadoBrutoExtra}` : ""}`;
+      const linhaStatus = p.hypothesis_status
+        ? `STATUS: ${p.hypothesis_status}`
+        : `[Conteúdo de rotina — sem hipótese em teste]`;
       return `POST: ${titulo}
 FORMATO: ${p.post_type}
 OBJETIVO ESTRATÉGICO: ${p.strategic_objective || "não informado"}
 LINHA EDITORIAL: ${p.editorial_line || "não informado"}
 MODO DE CONTEÚDO: ${p.content_mode || "não informado"}
 HIPÓTESE: ${p.hypothesis || "sem hipótese registrada"}
-STATUS: ${p.hypothesis_status || "Observar"}
+${linhaStatus}
 RESULTADO — DADO BRUTO: ${dadoBruto}
-RESULTADO — INTERPRETAÇÃO: ${interpretacao}`;
+RESULTADO — INTERPRETAÇÃO: ${interpretacao || "Sem interpretação adicional registrada."}`;
     })
     .join("\n\n");
 

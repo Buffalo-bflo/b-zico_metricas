@@ -108,15 +108,16 @@ export default async function EstrategiaPage({
       strategic_objective: tags[p.id].strategic_objective,
     }));
 
-  // "Padrão fixo" não é uma hipótese sendo testada, então fica fora dessa contagem —
-  // senão o total não bateria com a soma de confirmadas/refutadas/observando.
+  // "Padrão fixo" e status vazio (conteúdo de rotina, status agora é opcional) não são
+  // hipótese sendo testada, então ficam fora dessa contagem — senão o total não bateria
+  // com a soma de confirmadas/refutadas/observando.
   const todasTags = tagsData ?? [];
-  const tagsComoHipotese = todasTags.filter((t) => t.hypothesis_status !== "Padrão fixo");
+  const tagsComoHipotese = todasTags.filter((t) => t.hypothesis_status && t.hypothesis_status !== "Padrão fixo");
   const testesResumo = {
     total: tagsComoHipotese.length,
     confirmadas: tagsComoHipotese.filter((t) => t.hypothesis_status === "Confirmada").length,
     refutadas: tagsComoHipotese.filter((t) => t.hypothesis_status === "Refutada").length,
-    observando: tagsComoHipotese.filter((t) => !t.hypothesis_status || t.hypothesis_status === "Observar").length,
+    observando: tagsComoHipotese.filter((t) => t.hypothesis_status === "Observar").length,
   };
 
   const contextoTexto = notas.length

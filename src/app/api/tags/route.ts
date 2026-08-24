@@ -36,7 +36,9 @@ export async function POST(req: NextRequest) {
       strategic_objective: strategicObjective || null,
       origin: origin || "Agência",
       hypothesis: hypothesis || null,
-      hypothesis_status: hypothesisStatus || "Observar",
+      // Status é opcional agora: só é um teste deliberado quando o usuário escolhe um valor.
+      // Conteúdo de rotina/Padrão fixo pode ficar sem status (null), em vez de cair em "Observar".
+      hypothesis_status: hypothesisStatus || null,
       actual_result: actualResult || null,
       updated_at: new Date().toISOString(),
     },

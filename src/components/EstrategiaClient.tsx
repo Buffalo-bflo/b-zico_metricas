@@ -44,7 +44,7 @@ const formDraftVazio = {
   objetivoEstrategico: "",
   origem: "Agência",
   hipotese: "",
-  statusHip: "Observar",
+  statusHip: "",
   resultado: "",
 };
 
@@ -96,7 +96,7 @@ export function EstrategiaClient({
             objetivoEstrategico: t.strategic_objective ?? "",
             origem: t.origin ?? "Agência",
             hipotese: t.hypothesis ?? "",
-            statusHip: t.hypothesis_status ?? "Observar",
+            statusHip: t.hypothesis_status ?? "",
             resultado: t.actual_result ?? "",
           }
         : formDraftVazio
@@ -388,11 +388,16 @@ export function EstrategiaClient({
                 </label>
                 <label style={labelStyle}>
                   Status da Hipótese
+                  <span style={{ display: "block", fontSize: 10, color: C.cinza, marginTop: 2 }}>
+                    Só preencha se este post for um teste deliberado — um gancho, formato ou ângulo novo que você
+                    quer avaliar. Conteúdo de rotina ou Padrão fixo pode ficar sem status.
+                  </span>
                   <select
                     value={formDraft.statusHip}
                     onChange={(e) => setFormDraft({ ...formDraft, statusHip: e.target.value })}
                     style={selectStyle}
                   >
+                    <option value="">— nenhum (conteúdo de rotina) —</option>
                     {STATUS_HIP_OPTS.map((o) => (
                       <option key={o} value={o}>
                         {o}
