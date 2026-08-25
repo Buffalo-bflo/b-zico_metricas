@@ -19,6 +19,7 @@ import {
 } from "@/lib/designTokens";
 import { fmtDate } from "@/lib/metrics";
 import { YearCalendar } from "@/components/YearCalendar";
+import type { Nota } from "@/lib/types";
 
 type Post = { id: string; post_type: string; description: string; post_date: string };
 type Tag = {
@@ -34,7 +35,6 @@ type Tag = {
 };
 type Seguidores = { period_label: string; gained: number; lost: number } | null;
 type Horario = { peak_window: string } | null;
-type Nota = { id: string; event_date: string; note: string };
 type Periodo = { start: string; end: string; label: string };
 
 const formDraftVazio = {
@@ -78,9 +78,11 @@ export function EstrategiaClient({
   const [horarioSalvo, setHorarioSalvo] = useState(false);
 
   const [notas, setNotas] = useState(notasIniciais);
-  const [novaData, setNovaData] = useState("");
+  const [novaDataInicio, setNovaDataInicio] = useState("");
+  const [novaDataFim, setNovaDataFim] = useState("");
   const [novaNota, setNovaNota] = useState("");
   const [salvandoNota, setSalvandoNota] = useState(false);
+  const [notaErro, setNotaErro] = useState("");
 
   const qtdMarcados = Object.keys(tags).length;
 
@@ -181,19 +183,28 @@ export function EstrategiaClient({
   };
 
   const adicionarNota = async () => {
-    if (!novaData || !novaNota.trim()) return;
+    if (!novaDataInicio || !novaNota.trim()) return;
     setSalvandoNota(true);
+    setNotaErro("");
     try {
       const res = await fetch("/api/manual-metrics", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ kind: "contexto_add", data: novaData, nota: novaNota }),
+        body: JSON.stringify({
+          kind: "contexto_add",
+          dataInicio: novaDataInicio,
+          dataFim: novaDataFim || undefined,
+          nota: novaNota,
+        }),
       });
       const json = await res.json();
       if (res.ok) {
-        setNotas([...notas, json.nota].sort((a, b) => a.event_date.localeCompare(b.event_date)));
-        setNovaData("");
+        setNotas([...notas, json.nota].sort((a, b) => a.event_date_start.localeCompare(b.event_date_start)));
+        setNovaDataInicio("");
+        setNovaDataFim("");
         setNovaNota("");
+      } else {
+        setNotaErro(json.error ?? "Não foi possível salvar a data.");
       }
     } finally {
       setSalvandoNota(false);
@@ -547,12 +558,13 @@ export function EstrategiaClient({
         <div className="baz-accordion-body">
         <div style={{ ...labelStyle, marginBottom: 12 }}>
           Cadastre quantas datas futuras quiser, de qualquer mês — nada aqui se apaga quando você adiciona uma
-          nova. Cada nota aparece pra IA a partir da semana em que foi cadastrada. Clica num dia do calendário
-          pra já preencher a data de uma nota nova.
+          nova. Se o evento durar vários dias seguidos, preencha a Data final e ele aparece como uma barra
+          contínua no calendário. Cada nota aparece pra IA a partir da semana em que foi cadastrada. Clica num
+          dia do calendário pra já preencher a data de início de uma nota nova.
         </div>
 
         <div style={{ marginBottom: 20 }}>
-          <YearCalendar notas={notas} onDayClick={(iso) => setNovaData(iso)} />
+          <YearCalendar notas={notas} onDayClick={(iso) => setNovaDataInicio(iso)} />
         </div>
 
         {notas.length > 0 && (
@@ -579,7 +591,9 @@ export function EstrategiaClient({
                       whiteSpace: "nowrap",
                     }}
                   >
-                    {fmtDate(n.event_date)}
+                    {n.event_date_start === n.event_date_end
+                      ? fmtDate(n.event_date_start)
+                      : `${fmtDate(n.event_date_start)} – ${fmtDate(n.event_date_end)}`}
                   </div>
                   <div style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 12, color: C.preto }}>{n.note}</div>
                 </div>
@@ -595,13 +609,39 @@ export function EstrategiaClient({
           </div>
         )}
 
+        {notaErro && (
+          <div
+            style={{
+              background: `${C.erro}14`,
+              border: `1px solid ${C.erro}`,
+              padding: "8px 10px",
+              borderRadius: 4,
+              fontSize: 11,
+              color: C.preto,
+              marginBottom: 10,
+            }}
+          >
+            {notaErro}
+          </div>
+        )}
+
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "flex-end" }}>
           <label style={labelStyle}>
-            Data
+            Data de início
             <input
               type="date"
-              value={novaData}
-              onChange={(e) => setNovaData(e.target.value)}
+              value={novaDataInicio}
+              onChange={(e) => setNovaDataInicio(e.target.value)}
+              style={{ ...selectStyle, width: 160 }}
+            />
+          </label>
+          <label style={labelStyle}>
+            Data final (opcional)
+            <input
+              type="date"
+              value={novaDataFim}
+              min={novaDataInicio || undefined}
+              onChange={(e) => setNovaDataFim(e.target.value)}
               style={{ ...selectStyle, width: 160 }}
             />
           </label>
@@ -617,9 +657,9 @@ export function EstrategiaClient({
           </label>
           <button
             onClick={adicionarNota}
-            disabled={salvandoNota || !novaData || !novaNota.trim()}
+            disabled={salvandoNota || !novaDataInicio || !novaNota.trim()}
             className="baz-btn-primary"
-            style={{ ...btnPrimary, opacity: salvandoNota || !novaData || !novaNota.trim() ? 0.5 : 1 }}
+            style={{ ...btnPrimary, opacity: salvandoNota || !novaDataInicio || !novaNota.trim() ? 0.5 : 1 }}
           >
             Adicionar
           </button>

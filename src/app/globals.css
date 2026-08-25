@@ -184,18 +184,14 @@ tbody tr:hover { background: var(--roxo-tint); }
 .baz-btn-ghost-muted { transition: color 0.15s ease; }
 .baz-btn-ghost-muted:hover { color: var(--preto); text-decoration: underline; }
 
-/* Dia do calendário sem nota ganha o mesmo tint roxo de linha de tabela. Dia com
-   nota já é preenchido roxo sólido — não dá pra escurecer mais sem virar uma área
-   grande roxa, então o feedback ali é movimento (scale), não cor. */
+/* Número do dia no calendário — os eventos agora são as barras abaixo dele, então o
+   dia em si só precisa do tint roxo de hover, igual qualquer linha clicável. */
 .baz-day-cell {
-  transition: background 0.15s ease, color 0.15s ease, transform 0.15s ease;
+  transition: background 0.15s ease, color 0.15s ease;
 }
-.baz-day-cell:hover:not(.baz-day-cell--marcado) {
+.baz-day-cell:hover {
   background: var(--roxo-tint);
   color: var(--roxo);
-}
-.baz-day-cell--marcado:hover {
-  transform: scale(1.08);
 }
 
 /* Número de célula de tabela (classe compartilhada) — ganha um leve realce quando a

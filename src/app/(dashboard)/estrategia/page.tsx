@@ -59,7 +59,7 @@ export default async function EstrategiaPage({
       .eq("period_end", period.end)
       .eq("day_of_week", "")
       .maybeSingle(),
-    supabase.from("context_notes").select("*").order("event_date", { ascending: true }),
+    supabase.from("context_notes").select("*").order("event_date_start", { ascending: true }),
     supabase.from("ai_recommendations").select("*").order("created_at", { ascending: false }).limit(1).maybeSingle(),
     computeWeeklyProjection(),
     computeBaseline(janela),
@@ -121,7 +121,13 @@ export default async function EstrategiaPage({
   };
 
   const contextoTexto = notas.length
-    ? notas.map((n) => `- ${fmtDate(n.event_date)}: ${n.note}`).join("\n")
+    ? notas
+        .map((n) =>
+          n.event_date_start === n.event_date_end
+            ? `- ${fmtDate(n.event_date_start)}: ${n.note}`
+            : `- ${fmtDate(n.event_date_start)} a ${fmtDate(n.event_date_end)}: ${n.note}`
+        )
+        .join("\n")
     : "";
 
   const prompt = buildWeeklyPrompt({

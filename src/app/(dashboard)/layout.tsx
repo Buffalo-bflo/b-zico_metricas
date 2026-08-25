@@ -1,11 +1,20 @@
 import { C } from "@/lib/designTokens";
 import NavTabs from "@/components/NavTabs";
 import { getAvailableMonths } from "@/lib/months";
+import { supabaseServer } from "@/lib/supabase/server";
+import { computeLembretes } from "@/lib/reminders";
+import { LembreteEventos } from "@/components/LembreteEventos";
+import type { Nota } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const months = await getAvailableMonths();
+  const supabase = supabaseServer();
+  const [months, { data: notasData }] = await Promise.all([
+    getAvailableMonths(),
+    supabase.from("context_notes").select("id, event_date_start, event_date_end, note"),
+  ]);
+  const lembretes = computeLembretes((notasData ?? []) as Nota[], new Date());
   return (
     <div
       className="baz-page-pad"
@@ -64,6 +73,8 @@ export default async function DashboardLayout({ children }: { children: React.Re
         </div>
         <NavTabs months={months} />
       </div>
+
+      <LembreteEventos lembretes={lembretes} />
 
       {children}
 

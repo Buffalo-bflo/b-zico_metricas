@@ -6,7 +6,10 @@ export async function GET(req: NextRequest) {
   const periodStart = req.nextUrl.searchParams.get("periodStart");
   const periodEnd = req.nextUrl.searchParams.get("periodEnd");
 
-  const { data: notas } = await supabase.from("context_notes").select("*").order("event_date", { ascending: true });
+  const { data: notas } = await supabase
+    .from("context_notes")
+    .select("*")
+    .order("event_date_start", { ascending: true });
 
   let seguidores = null;
   let horario = null;
@@ -37,12 +40,17 @@ export async function POST(req: NextRequest) {
   const supabase = supabaseServer();
 
   if (body.kind === "contexto_add") {
-    if (!body.nota?.trim() || !body.data) {
+    if (!body.nota?.trim() || !body.dataInicio) {
       return NextResponse.json({ error: "Data e texto da nota são obrigatórios." }, { status: 400 });
+    }
+    // Sem data final informada, o evento é de um dia só (fim = início).
+    const dataFim = body.dataFim || body.dataInicio;
+    if (dataFim < body.dataInicio) {
+      return NextResponse.json({ error: "Data final não pode ser antes da data inicial." }, { status: 400 });
     }
     const { data, error } = await supabase
       .from("context_notes")
-      .insert({ event_date: body.data, note: body.nota.trim() })
+      .insert({ event_date_start: body.dataInicio, event_date_end: dataFim, note: body.nota.trim() })
       .select("*")
       .single();
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
