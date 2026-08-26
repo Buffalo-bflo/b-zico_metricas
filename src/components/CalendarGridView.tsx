@@ -1,13 +1,22 @@
 "use client";
 
-import { C } from "@/lib/designTokens";
+import { C, TYPE } from "@/lib/designTokens";
 import { DIAS_SEMANA, MAX_STACK_VISIVEL, buildEventSegments, atribuirStacks } from "@/lib/calendarGrid";
 import type { Nota } from "@/lib/types";
 
-// Renderizador compartilhado de grid — usado tanto pela visão de Mês (várias semanas,
-// `cells` com `null` de preenchimento) quanto pela de Semana (uma linha só, 7 células).
-// `size="large"` (semana) ganha células/fonte maiores que `size="compact"` (mês), já
-// que a semana tem uma tela inteira só pra uma linha.
+export type CelulaGrid = { iso: string; foraDoMes?: boolean };
+
+function hojeIso(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
+// Renderizador compartilhado de grid — usado tanto pela visão de Mês (várias semanas)
+// quanto pela de Semana (uma linha só). Cada semana é UM grid de 7 colunas × (1 linha
+// de números + `MAX_STACK_VISIVEL` linhas de barra), com linhas-guia verticais de
+// altura fixa por trás — é isso que faz o grid ler como uma tabela de verdade (tipo
+// Google Calendar), em vez de números soltos no vazio. As barras de evento continuam
+// como itens que atravessam colunas por cima dessas linhas, então uma barra de vários
+// dias segue contínua visualmente mesmo com o grid por trás dela.
 export function CalendarGridView({
   cells,
   notas,
@@ -15,31 +24,33 @@ export function CalendarGridView({
   onEventClick,
   size = "compact",
 }: {
-  cells: (string | null)[];
+  cells: CelulaGrid[];
   notas: Nota[];
   onDayClick?: (iso: string) => void;
   onEventClick?: (nota: Nota) => void;
   size?: "compact" | "large";
 }) {
-  const alturaDia = size === "large" ? 32 : 20;
-  const alturaBarra = size === "large" ? 20 : 14;
-  const fonteBarra = size === "large" ? 11 : 8;
-  const fonteDia = size === "large" ? 13 : 10;
+  const alturaData = size === "large" ? 40 : 28;
+  const alturaBarra = size === "large" ? 22 : 16;
+  const fonteBarra = size === "large" ? 11 : 9;
+  const fonteDia = size === "large" ? 13 : 11;
+  const hoje = hojeIso();
 
-  const segmentosTodos = buildEventSegments(notas, cells);
+  const isoCells = cells.map((c) => c.iso);
+  const segmentosTodos = buildEventSegments(notas, isoCells);
   const notaPorId = new Map(notas.map((n) => [n.id, n]));
 
-  const semanas: (string | null)[][] = [];
+  const semanas: CelulaGrid[][] = [];
   for (let i = 0; i < cells.length; i += 7) semanas.push(cells.slice(i, i + 7));
 
+  const totalLinhas = 1 + MAX_STACK_VISIVEL;
+  const gridTemplateRows = `${alturaData}px repeat(${MAX_STACK_VISIVEL}, ${alturaBarra}px)`;
+
   return (
-    <div>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 2, marginBottom: 4 }}>
+    <div style={{ border: `1px solid ${C.linha}`, borderRadius: 4, overflow: "hidden" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", borderBottom: `2px solid ${C.preto}` }}>
         {DIAS_SEMANA.map((d, i) => (
-          <div
-            key={i}
-            style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: fonteDia, color: C.cinza, textAlign: "center" }}
-          >
+          <div key={i} style={{ ...TYPE.micro, color: C.cinza, textAlign: "center", padding: "8px 0" }}>
             {d}
           </div>
         ))}
@@ -50,92 +61,118 @@ export function CalendarGridView({
         const comStack = atribuirStacks(segsSemana);
         const visiveis = comStack.filter((s) => s.stackRow < MAX_STACK_VISIVEL);
         const escondidos = comStack.filter((s) => s.stackRow >= MAX_STACK_VISIVEL);
-        const stacksVisiveis = visiveis.reduce((m, s) => Math.max(m, s.stackRow + 1), 0);
 
         return (
-          <div key={weekIndex} style={{ marginBottom: size === "large" ? 8 : 4 }}>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 2 }}>
-              {semana.map((iso, i) => {
-                if (iso === null) return <div key={i} />;
-                const dia = Number(iso.slice(8, 10));
-                const mes = Number(iso.slice(5, 7));
-                const label = dia === 1 ? `${dia}/${mes}` : String(dia);
-                return (
-                  <button
-                    key={i}
-                    type="button"
-                    onClick={() => onDayClick?.(iso)}
-                    disabled={!onDayClick}
-                    className="baz-day-cell"
+          <div
+            key={weekIndex}
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(7, 1fr)",
+              gridTemplateRows,
+              borderBottom: weekIndex < semanas.length - 1 ? `1px solid ${C.linha}` : "none",
+            }}
+          >
+            {/* linhas-guia verticais — só decorativas, ficam atrás do conteúdo */}
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div
+                key={`guia-${i}`}
+                style={{ gridColumn: i + 1, gridRow: `1 / span ${totalLinhas}`, borderRight: `1px solid ${C.linha}` }}
+              />
+            ))}
+
+            {semana.map((cell, i) => {
+              const dia = Number(cell.iso.slice(8, 10));
+              const ehHoje = cell.iso === hoje;
+              return (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => onDayClick?.(cell.iso)}
+                  disabled={!onDayClick}
+                  className="baz-day-cell"
+                  style={{
+                    gridColumn: i + 1,
+                    gridRow: 1,
+                    display: "flex",
+                    alignItems: "flex-start",
+                    justifyContent: "flex-start",
+                    padding: "4px 0 0 6px",
+                    border: "none",
+                    background: "transparent",
+                    cursor: onDayClick ? "pointer" : "default",
+                  }}
+                >
+                  <span
                     style={{
-                      height: alturaDia,
+                      fontFamily: "'JetBrains Mono', monospace",
+                      fontSize: fonteDia,
+                      fontWeight: ehHoje ? 700 : 400,
+                      color: ehHoje ? C.branco : cell.foraDoMes ? C.cinza : C.preto,
+                      background: ehHoje ? C.roxo : "transparent",
+                      width: ehHoje ? 22 : "auto",
+                      height: ehHoje ? 22 : "auto",
+                      borderRadius: "50%",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
-                      fontFamily: "'JetBrains Mono', monospace",
-                      fontSize: fonteDia,
-                      border: "none",
-                      borderRadius: 3,
-                      padding: 0,
-                      cursor: onDayClick ? "pointer" : "default",
-                      background: "transparent",
-                      color: C.preto,
                     }}
                   >
-                    {label}
-                  </button>
-                );
-              })}
-            </div>
+                    {dia}
+                  </span>
+                </button>
+              );
+            })}
 
-            {Array.from({ length: stacksVisiveis }).map((_, stackRow) => (
-              <div
-                key={stackRow}
-                style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 2, marginTop: 2 }}
+            {visiveis.map((s) => (
+              <button
+                key={s.noteId}
+                type="button"
+                onClick={() => {
+                  const nota = notaPorId.get(s.noteId);
+                  if (nota) onEventClick?.(nota);
+                }}
+                title={s.detalhes ? `${s.note}\n${s.detalhes}` : s.note}
+                style={{
+                  gridColumn: `${s.colStart + 1} / span ${s.colCount}`,
+                  gridRow: s.stackRow + 2,
+                  alignSelf: "center",
+                  margin: "0 3px",
+                  height: alturaBarra - 3,
+                  background: C.roxo,
+                  color: C.branco,
+                  fontFamily: "'Montserrat', sans-serif",
+                  fontSize: fonteBarra,
+                  fontWeight: 700,
+                  lineHeight: `${alturaBarra - 3}px`,
+                  padding: "0 6px",
+                  border: "none",
+                  overflow: "hidden",
+                  whiteSpace: "nowrap",
+                  textOverflow: "ellipsis",
+                  textAlign: "left",
+                  cursor: onEventClick ? "pointer" : "default",
+                  borderTopLeftRadius: s.bordaEsquerdaAberta ? 0 : 3,
+                  borderBottomLeftRadius: s.bordaEsquerdaAberta ? 0 : 3,
+                  borderTopRightRadius: s.bordaDireitaAberta ? 0 : 3,
+                  borderBottomRightRadius: s.bordaDireitaAberta ? 0 : 3,
+                }}
               >
-                {visiveis
-                  .filter((s) => s.stackRow === stackRow)
-                  .map((s) => (
-                    <button
-                      key={s.noteId}
-                      type="button"
-                      onClick={() => {
-                        const nota = notaPorId.get(s.noteId);
-                        if (nota) onEventClick?.(nota);
-                      }}
-                      title={s.detalhes ? `${s.note}\n${s.detalhes}` : s.note}
-                      style={{
-                        gridColumn: `${s.colStart + 1} / span ${s.colCount}`,
-                        height: alturaBarra,
-                        background: C.roxo,
-                        color: C.branco,
-                        fontFamily: "'Montserrat', sans-serif",
-                        fontSize: fonteBarra,
-                        fontWeight: 700,
-                        lineHeight: `${alturaBarra}px`,
-                        padding: "0 4px",
-                        border: "none",
-                        overflow: "hidden",
-                        whiteSpace: "nowrap",
-                        textOverflow: "ellipsis",
-                        textAlign: "left",
-                        cursor: onEventClick ? "pointer" : "default",
-                        borderTopLeftRadius: s.bordaEsquerdaAberta ? 0 : 3,
-                        borderBottomLeftRadius: s.bordaEsquerdaAberta ? 0 : 3,
-                        borderTopRightRadius: s.bordaDireitaAberta ? 0 : 3,
-                        borderBottomRightRadius: s.bordaDireitaAberta ? 0 : 3,
-                      }}
-                    >
-                      {s.note}
-                    </button>
-                  ))}
-              </div>
+                {s.note}
+              </button>
             ))}
 
             {escondidos.length > 0 && (
               <div
                 title={escondidos.map((s) => s.note).join(" · ")}
-                style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 8, color: C.cinza, marginTop: 2 }}
+                style={{
+                  gridColumn: "1 / -1",
+                  gridRow: MAX_STACK_VISIVEL + 1,
+                  alignSelf: "end",
+                  fontFamily: "'Montserrat', sans-serif",
+                  fontSize: 9,
+                  color: C.cinza,
+                  padding: "0 6px",
+                }}
               >
                 +{escondidos.length} evento{escondidos.length > 1 ? "s" : ""}
               </div>

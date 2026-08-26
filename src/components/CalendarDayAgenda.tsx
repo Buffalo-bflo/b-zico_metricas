@@ -49,7 +49,6 @@ export function CalendarDayAgenda({
               key={n.id}
               style={{
                 border: `1px solid ${C.linha}`,
-                borderLeft: `4px solid ${C.roxo}`,
                 borderRadius: 4,
                 padding: "10px 12px",
                 display: "flex",
@@ -59,16 +58,19 @@ export function CalendarDayAgenda({
               }}
             >
               <div>
-                <div style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 13, fontWeight: 700, color: C.preto }}>
-                  {n.note}
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <span style={{ width: 8, height: 8, borderRadius: "50%", background: C.roxo, flexShrink: 0 }} />
+                  <span style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 13, fontWeight: 700, color: C.preto }}>
+                    {n.note}
+                  </span>
                 </div>
                 {n.event_date_start !== n.event_date_end && (
-                  <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: C.roxo, marginTop: 2 }}>
+                  <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: C.roxo, marginTop: 2, marginLeft: 16 }}>
                     {n.event_date_start === dataIso ? "Início" : n.event_date_end === dataIso ? "Fim" : "Em andamento"}
                   </div>
                 )}
                 {n.detalhes && (
-                  <div style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 12, color: C.cinza, marginTop: 4 }}>
+                  <div style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 12, color: C.cinza, marginTop: 4, marginLeft: 16 }}>
                     {n.detalhes}
                   </div>
                 )}

@@ -6,7 +6,7 @@ import { C, selectStyle, btnPrimary, btnSecondary } from "@/lib/designTokens";
 import { buildMonthGrid, toIso } from "@/lib/calendarGrid";
 import { sundayOf, weekLabel } from "@/lib/weeks";
 import { fmtDate } from "@/lib/metrics";
-import { CalendarGridView } from "@/components/CalendarGridView";
+import { CalendarGridView, type CelulaGrid } from "@/components/CalendarGridView";
 import { CalendarDayAgenda } from "@/components/CalendarDayAgenda";
 import type { Nota } from "@/lib/types";
 
@@ -146,14 +146,14 @@ export function CalendarioClient({ notasIniciais }: { notasIniciais: Nota[] }) {
   const ano = Number(anoStr);
   const mes = Number(mesStr);
 
-  let cells: (string | null)[] = [];
+  let cells: CelulaGrid[] = [];
   let labelPeriodo = "";
   if (modo === "mes") {
-    cells = buildMonthGrid(ano, mes).map((d) => (d === null ? null : toIso(ano, mes, d)));
+    cells = buildMonthGrid(ano, mes).map((c) => ({ iso: toIso(c.ano, c.mes, c.dia), foraDoMes: c.foraDoMes }));
     labelPeriodo = `${MESES[mes - 1]} ${ano}`;
   } else if (modo === "semana") {
     const domingo = sundayOf(dataFoco);
-    cells = Array.from({ length: 7 }, (_, i) => addDays(domingo, i));
+    cells = Array.from({ length: 7 }, (_, i) => ({ iso: addDays(domingo, i) }));
     labelPeriodo = weekLabel(domingo, addDays(domingo, 6));
   }
 
