@@ -18,7 +18,6 @@ import {
   TYPE,
 } from "@/lib/designTokens";
 import { fmtDate } from "@/lib/metrics";
-import { YearCalendar } from "@/components/YearCalendar";
 import type { Nota } from "@/lib/types";
 
 type Post = { id: string; post_type: string; description: string; post_date: string };
@@ -78,11 +77,6 @@ export function EstrategiaClient({
   const [horarioSalvo, setHorarioSalvo] = useState(false);
 
   const [notas, setNotas] = useState(notasIniciais);
-  const [novaDataInicio, setNovaDataInicio] = useState("");
-  const [novaDataFim, setNovaDataFim] = useState("");
-  const [novaNota, setNovaNota] = useState("");
-  const [salvandoNota, setSalvandoNota] = useState(false);
-  const [notaErro, setNotaErro] = useState("");
 
   const qtdMarcados = Object.keys(tags).length;
 
@@ -180,35 +174,6 @@ export function EstrategiaClient({
     });
     setHorarioSalvo(true);
     setTimeout(() => setHorarioSalvo(false), 2000);
-  };
-
-  const adicionarNota = async () => {
-    if (!novaDataInicio || !novaNota.trim()) return;
-    setSalvandoNota(true);
-    setNotaErro("");
-    try {
-      const res = await fetch("/api/manual-metrics", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          kind: "contexto_add",
-          dataInicio: novaDataInicio,
-          dataFim: novaDataFim || undefined,
-          nota: novaNota,
-        }),
-      });
-      const json = await res.json();
-      if (res.ok) {
-        setNotas([...notas, json.nota].sort((a, b) => a.event_date_start.localeCompare(b.event_date_start)));
-        setNovaDataInicio("");
-        setNovaDataFim("");
-        setNovaNota("");
-      } else {
-        setNotaErro(json.error ?? "Não foi possível salvar a data.");
-      }
-    } finally {
-      setSalvandoNota(false);
-    }
   };
 
   const removerNota = async (id: string) => {
@@ -556,15 +521,14 @@ export function EstrategiaClient({
           <SectionTitle tight>Contexto e datas importantes</SectionTitle>
         </summary>
         <div className="baz-accordion-body">
-        <div style={{ ...labelStyle, marginBottom: 12 }}>
-          Cadastre quantas datas futuras quiser, de qualquer mês — nada aqui se apaga quando você adiciona uma
-          nova. Se o evento durar vários dias seguidos, preencha a Data final e ele aparece como uma barra
-          contínua no calendário. Cada nota aparece pra IA a partir da semana em que foi cadastrada. Clica num
-          dia do calendário pra já preencher a data de início de uma nota nova.
-        </div>
-
-        <div style={{ marginBottom: 20 }}>
-          <YearCalendar notas={notas} onDayClick={(iso) => setNovaDataInicio(iso)} />
+        <div style={{ ...labelStyle, marginBottom: 12, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
+          <span>
+            Cada nota aparece pra IA a partir da semana em que foi cadastrada. Pra adicionar, editar ou ver o
+            calendário visual (Dia/Semana/Mês), use a aba Calendário.
+          </span>
+          <a href="/calendario" className="baz-btn-secondary" style={{ ...btnSecondary, whiteSpace: "nowrap" }}>
+            Ver calendário completo →
+          </a>
         </div>
 
         {notas.length > 0 && (
@@ -609,61 +573,6 @@ export function EstrategiaClient({
           </div>
         )}
 
-        {notaErro && (
-          <div
-            style={{
-              background: `${C.erro}14`,
-              border: `1px solid ${C.erro}`,
-              padding: "8px 10px",
-              borderRadius: 4,
-              fontSize: 11,
-              color: C.preto,
-              marginBottom: 10,
-            }}
-          >
-            {notaErro}
-          </div>
-        )}
-
-        <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "flex-end" }}>
-          <label style={labelStyle}>
-            Data de início
-            <input
-              type="date"
-              value={novaDataInicio}
-              onChange={(e) => setNovaDataInicio(e.target.value)}
-              style={{ ...selectStyle, width: 160 }}
-            />
-          </label>
-          <label style={labelStyle}>
-            Data final (opcional)
-            <input
-              type="date"
-              value={novaDataFim}
-              min={novaDataInicio || undefined}
-              onChange={(e) => setNovaDataFim(e.target.value)}
-              style={{ ...selectStyle, width: 160 }}
-            />
-          </label>
-          <label style={{ ...labelStyle, flex: 1, minWidth: 220 }}>
-            Nota
-            <input
-              type="text"
-              value={novaNota}
-              onChange={(e) => setNovaNota(e.target.value)}
-              placeholder="Ex: Dia do Cliente, começar a preparar."
-              style={selectStyle}
-            />
-          </label>
-          <button
-            onClick={adicionarNota}
-            disabled={salvandoNota || !novaDataInicio || !novaNota.trim()}
-            className="baz-btn-primary"
-            style={{ ...btnPrimary, opacity: salvandoNota || !novaDataInicio || !novaNota.trim() ? 0.5 : 1 }}
-          >
-            Adicionar
-          </button>
-        </div>
         </div>
       </details>
     </div>

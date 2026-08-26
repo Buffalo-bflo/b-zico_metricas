@@ -50,7 +50,38 @@ export async function POST(req: NextRequest) {
     }
     const { data, error } = await supabase
       .from("context_notes")
-      .insert({ event_date_start: body.dataInicio, event_date_end: dataFim, note: body.nota.trim() })
+      .insert({
+        event_date_start: body.dataInicio,
+        event_date_end: dataFim,
+        note: body.nota.trim(),
+        detalhes: body.detalhes?.trim() || null,
+      })
+      .select("*")
+      .single();
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ ok: true, nota: data });
+  }
+
+  if (body.kind === "contexto_update") {
+    if (!body.id) {
+      return NextResponse.json({ error: "id é obrigatório." }, { status: 400 });
+    }
+    if (!body.nota?.trim() || !body.dataInicio) {
+      return NextResponse.json({ error: "Data e texto da nota são obrigatórios." }, { status: 400 });
+    }
+    const dataFim = body.dataFim || body.dataInicio;
+    if (dataFim < body.dataInicio) {
+      return NextResponse.json({ error: "Data final não pode ser antes da data inicial." }, { status: 400 });
+    }
+    const { data, error } = await supabase
+      .from("context_notes")
+      .update({
+        event_date_start: body.dataInicio,
+        event_date_end: dataFim,
+        note: body.nota.trim(),
+        detalhes: body.detalhes?.trim() || null,
+      })
+      .eq("id", body.id)
       .select("*")
       .single();
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });

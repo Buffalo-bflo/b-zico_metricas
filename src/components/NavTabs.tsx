@@ -12,6 +12,7 @@ const TABS = [
   { href: "/stories", label: "Stories" },
   { href: "/publico", label: "Público" },
   { href: "/estrategia", label: "Estratégia" },
+  { href: "/calendario", label: "Calendário" },
   { href: "/testes", label: "Testes" },
   { href: "/comparar", label: "Comparar" },
 ];
@@ -36,7 +37,7 @@ export default function NavTabs({ months }: { months: string[] }) {
         ))}
       </div>
       <div className="baz-nav-controls">
-        {!pathname?.startsWith("/comparar") && !pathname?.startsWith("/testes") && (
+        {!pathname?.startsWith("/comparar") && !pathname?.startsWith("/testes") && !pathname?.startsWith("/calendario") && (
           <Suspense fallback={null}>
             <PeriodSelector months={months} />
           </Suspense>
