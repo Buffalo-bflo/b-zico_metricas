@@ -105,7 +105,15 @@ type MediaItem = {
   permalink?: string;
   media_type: string;
   media_product_type: string;
+  // Só vem preenchido em Reels. false = ainda não está no perfil/grade, que é como a Meta
+  // representa um Reel de teste (Trial Reel) que não foi compartilhado com os seguidores.
+  is_shared_to_feed?: boolean;
 };
+
+// Trial Reels só existem a partir de agosto/2026 pra essa conta. Reels antigos (2021–2024
+// e maio/2026) também têm is_shared_to_feed=false, mas por outro motivo (o reel foi
+// publicado sem a opção "compartilhar no feed") — não são testes e não devem ser marcados.
+const REELS_TESTE_DESDE = "2026-08-01";
 
 function mapPostType(item: MediaItem): string | null {
   if (item.media_product_type === "REELS") return "Reels";
@@ -133,7 +141,7 @@ async function syncFeedMedia(
   try {
     while (!done) {
       const params: Record<string, string> = {
-        fields: "id,caption,timestamp,permalink,media_type,media_product_type",
+        fields: "id,caption,timestamp,permalink,media_type,media_product_type,is_shared_to_feed",
         limit: "25",
       };
       if (after) params.after = after;
@@ -174,6 +182,7 @@ async function syncFeedMedia(
             account_username: "sejabazico",
             post_type: tipo,
             raw_post_type: item.media_product_type,
+            shared_to_feed: tipo === "Reels" ? (item.is_shared_to_feed ?? null) : null,
             description: item.caption ?? "",
             permalink: item.permalink ?? "",
             published_at: item.timestamp,
@@ -201,6 +210,40 @@ async function syncFeedMedia(
   }
 
   return { feedPosts, errors };
+}
+
+// A sincronização do Feed só olha os últimos dias. Mas o Gustavo pode liberar um reel de
+// teste pros seguidores semanas depois (ou o Instagram pode liberar ao fim das 72h). Por
+// isso, todo dia, cada teste ainda em aberto é consultado individualmente: se a Meta disser
+// que ele já está no perfil, ele vira "teste que foi pro feed".
+async function reverificarTestesAbertos(token: string): Promise<string[]> {
+  const errors: string[] = [];
+  const supabase = supabaseServer();
+  const { data: abertos, error } = await supabase
+    .from("feed_posts")
+    .select("id")
+    .eq("foi_reels_teste", true)
+    .eq("is_reels_teste", true)
+    .eq("post_type", "Reels")
+    .limit(60);
+  if (error) return [`Testes em aberto: ${error.message}`];
+
+  const hoje = new Date().toISOString().slice(0, 10);
+  for (const { id } of abertos ?? []) {
+    try {
+      const r = await graphGet<{ is_shared_to_feed?: boolean }>(id, { fields: "is_shared_to_feed" }, token);
+      if (r.is_shared_to_feed === true) {
+        const { error: upErr } = await supabase
+          .from("feed_posts")
+          .update({ shared_to_feed: true, is_reels_teste: false, promovido_em: hoje })
+          .eq("id", id);
+        if (upErr) errors.push(`Teste ${id}: ${upErr.message}`);
+      }
+    } catch (e) {
+      errors.push(`Teste ${id}: ${e instanceof Error ? e.message : String(e)}`);
+    }
+  }
+  return errors;
 }
 
 type StoryItem = { id: string; timestamp: string; media_type: string; caption?: string };
@@ -402,18 +445,50 @@ export async function runMetaSync(diasAtras = 10): Promise<SyncResult> {
     // deixamos uma sincronização rebaixar um número que já temos — senão o próprio robô
     // diário iria, silenciosamente, destruir o histórico com o passar do tempo.
     const ids = feedPosts.map((p) => p.id as string);
-    const { data: existentes } = await supabase.from("feed_posts").select("id, reach, views").in("id", ids);
+    const { data: existentes } = await supabase
+      .from("feed_posts")
+      .select("id, reach, views, is_reels_teste, foi_reels_teste, promovido_em")
+      .in("id", ids);
     const anterior = new Map((existentes ?? []).map((p) => [p.id, p]));
+    const hojeIso = new Date().toISOString().slice(0, 10);
     for (const p of feedPosts) {
       const antes = anterior.get(p.id as string);
-      if (!antes) continue;
-      p.reach = Math.max(Number(p.reach ?? 0), Number(antes.reach ?? 0));
-      p.views = Math.max(Number(p.views ?? 0), Number(antes.views ?? 0));
+      if (antes) {
+        p.reach = Math.max(Number(p.reach ?? 0), Number(antes.reach ?? 0));
+        p.views = Math.max(Number(p.views ?? 0), Number(antes.views ?? 0));
+      }
+
+      // Todo objeto do upsert precisa ter as mesmas chaves, então estes três campos são
+      // sempre enviados — partindo do valor que já está no banco pra nunca desfazer uma
+      // marcação manual da aba Feed nem esquecer que um reel nasceu como teste.
+      let isTeste = antes?.is_reels_teste ?? false;
+      let foiTeste = antes?.foi_reels_teste ?? false;
+      let promovidoEm: string | null = antes?.promovido_em ?? null;
+
+      if (p.post_type === "Reels" && (p.post_date as string) >= REELS_TESTE_DESDE) {
+        if (p.shared_to_feed === false && !foiTeste) {
+          // Descoberto agora como teste em andamento (só acontece uma vez por reel: depois
+          // disso a caixinha manual da aba Feed volta a mandar).
+          isTeste = true;
+          foiTeste = true;
+        } else if (p.shared_to_feed === true && foiTeste && isTeste) {
+          // Era teste e agora está no perfil: o teste funcionou. Passa a contar como
+          // conteúdo normal e fica destacado como "teste que foi pro feed".
+          isTeste = false;
+          promovidoEm = hojeIso;
+        }
+      }
+
+      p.is_reels_teste = isTeste;
+      p.foi_reels_teste = foiTeste;
+      p.promovido_em = promovidoEm;
     }
 
     const { error } = await supabase.from("feed_posts").upsert(feedPosts, { onConflict: "id" });
     if (error) errors.push(`Erro ao salvar posts de feed: ${error.message}`);
   }
+
+  errors.push(...(await reverificarTestesAbertos(creds.pageAccessToken)));
 
   if (storyPosts.length > 0) {
     const { error } = await supabase.from("story_posts").upsert(storyPosts, { onConflict: "id" });

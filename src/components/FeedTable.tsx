@@ -19,6 +19,19 @@ export type FeedTableRow = {
   follows: number;
   paid_boost: boolean;
   is_reels_teste: boolean;
+  foi_reels_teste: boolean;
+  shared_to_feed: boolean | null;
+};
+
+const seloStyle = {
+  fontFamily: "'Montserrat', sans-serif",
+  fontSize: 9,
+  fontWeight: 700,
+  textTransform: "uppercase" as const,
+  letterSpacing: "0.04em",
+  borderRadius: 20,
+  padding: "2px 8px",
+  whiteSpace: "nowrap" as const,
 };
 
 const ORDENAR_OPTS: { key: keyof FeedTableRow; label: string }[] = [
@@ -188,6 +201,22 @@ export function FeedTable({ posts: postsIniciais, totalGeral }: { posts: FeedTab
                   {p.description?.split("\n")[0].slice(0, 90)}
                   {i === 0 && ordenarPor === "views" && (
                     <span style={{ marginLeft: 6, color: C.roxo, fontWeight: 700 }}>★</span>
+                  )}
+                  {p.is_reels_teste && (
+                    <span
+                      title="Reels de teste: mostrado só pra quem não segue a conta, ainda não foi compartilhado no perfil"
+                      style={{ ...seloStyle, marginLeft: 8, color: C.preto, background: C.creme }}
+                    >
+                      Reels teste
+                    </span>
+                  )}
+                  {p.foi_reels_teste && !p.is_reels_teste && p.shared_to_feed === true && (
+                    <span
+                      title="Foi publicado como Reels de teste e depois compartilhado no feed: a hipótese funcionou"
+                      style={{ ...seloStyle, marginLeft: 8, color: C.branco, background: C.roxo }}
+                    >
+                      Teste → Feed ✓
+                    </span>
                   )}
                 </td>
                 <td

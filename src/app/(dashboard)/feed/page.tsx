@@ -18,7 +18,7 @@ export default async function FeedPage({
   const [{ data, error }, qualidade] = await Promise.all([
     supabase
       .from("feed_posts")
-      .select("id, post_type, description, post_date, views, reach, likes, comments, shares, saves, follows, paid_boost, is_reels_teste")
+      .select("id, post_type, description, post_date, views, reach, likes, comments, shares, saves, follows, paid_boost, is_reels_teste, foi_reels_teste, shared_to_feed")
       .gte("post_date", period.start)
       .lte("post_date", period.end)
       .order("post_date", { ascending: false }),

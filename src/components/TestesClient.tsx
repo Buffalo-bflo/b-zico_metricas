@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { SectionTitle } from "@/components/Brand";
 import { C, selectStyle, btnPrimary, btnSecondary, TYPE } from "@/lib/designTokens";
-import { fmtDate } from "@/lib/metrics";
+import { fmt, fmtDate } from "@/lib/metrics";
 
 export type Teste = {
   id: string;
@@ -21,6 +21,16 @@ export type Teste = {
 };
 
 export type PostOpcao = { id: string; post_type: string; post_date: string; description: string };
+
+// Reel que nasceu como Reels de teste. is_reels_teste = ainda em teste (só não seguidores);
+// foi pro feed = is_reels_teste false com shared_to_feed true.
+export type ReelTeste = PostOpcao & {
+  views: number;
+  reach: number;
+  is_reels_teste: boolean;
+  shared_to_feed: boolean | null;
+  promovido_em: string | null;
+};
 
 const STATUS_OPTS = ["Planejado", "Em andamento", "Concluído"] as const;
 const RESULTADO_OPTS = ["Confirmado", "Refutado", "Inconclusivo"] as const;
@@ -91,10 +101,12 @@ export function TestesClient({
   testesIniciais,
   posts,
   pendentesReelsTeste = [],
+  reelsTeste = [],
 }: {
   testesIniciais: Teste[];
   posts: PostOpcao[];
-  pendentesReelsTeste?: PostOpcao[];
+  pendentesReelsTeste?: ReelTeste[];
+  reelsTeste?: ReelTeste[];
 }) {
   const [testes, setTestes] = useState(testesIniciais);
   const [criando, setCriando] = useState(false);
@@ -103,6 +115,10 @@ export function TestesClient({
   const [erro, setErro] = useState("");
   const [editandoId, setEditandoId] = useState<string | null>(null);
   const [draft, setDraft] = useState<Partial<Teste>>({});
+
+  const emTeste = reelsTeste.filter((p) => p.is_reels_teste);
+  const promovidos = reelsTeste.filter((p) => !p.is_reels_teste && p.shared_to_feed === true);
+  const totalReelsTeste = emTeste.length + promovidos.length;
 
   const emAndamento = testes.filter((t) => t.status !== "Concluído");
   const concluidos = testes.filter((t) => t.status === "Concluído");
@@ -372,19 +388,58 @@ export function TestesClient({
         </p>
       </div>
 
+      {reelsTeste.length > 0 && (
+        <div style={{ ...cardStyle, background: C.roxoTint, border: `1px solid ${C.roxo}33` }}>
+          <div style={{ ...TYPE.subhead, color: C.preto, marginBottom: 6 }}>Reels de teste: quantos foram pro feed</div>
+          <div style={{ display: "flex", gap: 28, flexWrap: "wrap", marginBottom: 10 }}>
+            {[
+              { rotulo: "No total", valor: totalReelsTeste },
+              { rotulo: "Ainda em teste", valor: emTeste.length },
+              { rotulo: "Foram pro feed", valor: promovidos.length },
+              { rotulo: "Taxa de promoção", valor: totalReelsTeste ? `${Math.round((promovidos.length / totalReelsTeste) * 100)}%` : "—" },
+            ].map((n) => (
+              <div key={n.rotulo}>
+                <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 22, fontWeight: 700, color: C.preto }}>
+                  {n.valor}
+                </div>
+                <div style={{ ...labelStyle, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.04em" }}>{n.rotulo}</div>
+              </div>
+            ))}
+          </div>
+          <p style={{ ...labelStyle, lineHeight: 1.6, marginBottom: promovidos.length ? 10 : 0 }}>
+            O Instagram mostra o Reels de teste só pra quem não te segue. Ele vai pro feed quando você compartilha com
+            todos ou, se ativou a opção, quando o Instagram libera sozinho após ~72h de bom desempenho. Os dados vêm da
+            sincronização diária com a Meta.
+          </p>
+          {promovidos.length > 0 && (
+            <>
+              <div style={{ ...labelStyle, fontWeight: 700, marginBottom: 4, color: C.roxo }}>
+                Testes que funcionaram e foram pro feed ({promovidos.length})
+              </div>
+              {promovidos.map((p) => (
+                <div key={p.id} style={{ fontSize: 11, color: C.preto, padding: "4px 0", borderBottom: `1px solid ${C.linha}` }}>
+                  {fmtDate(p.post_date)} · {(p.description ?? "").split("\n")[0].slice(0, 50)} · {fmt(p.views)} views
+                  {p.promovido_em ? ` · foi pro feed em ${fmtDate(p.promovido_em)}` : ""}
+                </div>
+              ))}
+            </>
+          )}
+        </div>
+      )}
+
       {pendentesReelsTeste.length > 0 && (
         <div style={{ ...cardStyle, background: `${C.creme}55`, border: `1px solid ${C.creme}` }}>
           <div style={{ ...TYPE.subhead, color: C.preto, marginBottom: 6 }}>
             Reels teste aguardando agrupamento ({pendentesReelsTeste.length})
           </div>
           <p style={{ ...labelStyle, marginBottom: 10, lineHeight: 1.6 }}>
-            Marcados como &quot;Reels teste?&quot; na aba Feed. Não entram na fila de Marcar Conteúdo da Estratégia
-            até você decidir: coloque-os no Grupo A/B de um teste abaixo (novo ou existente) quando tiver o par pra
-            comparar.
+            Detectados automaticamente pela Meta (ainda não compartilhados no perfil) ou marcados como &quot;Reels
+            teste?&quot; na aba Feed. Não entram na fila de Marcar Conteúdo da Estratégia até você decidir: coloque-os
+            no Grupo A/B de um teste abaixo (novo ou existente) quando tiver o par pra comparar.
           </p>
           {pendentesReelsTeste.map((p) => (
             <div key={p.id} style={{ fontSize: 11, color: C.preto, padding: "4px 0", borderBottom: `1px solid ${C.linha}` }}>
-              {fmtDate(p.post_date)} · {p.post_type} · {(p.description ?? "").split("\n")[0].slice(0, 60)}
+              {fmtDate(p.post_date)} · {p.post_type} · {(p.description ?? "").split("\n")[0].slice(0, 60)} · {fmt(p.views)} views
             </div>
           ))}
         </div>

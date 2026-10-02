@@ -11,7 +11,12 @@ export async function POST(req: NextRequest) {
 
   const patch: Record<string, boolean> = {};
   if (paidBoost !== undefined) patch.paid_boost = !!paidBoost;
-  if (reelsTeste !== undefined) patch.is_reels_teste = !!reelsTeste;
+  if (reelsTeste !== undefined) {
+    patch.is_reels_teste = !!reelsTeste;
+    // Marcar manualmente também registra que nasceu como teste; desmarcar não apaga isso,
+    // pra não perder o histórico se foi um engano.
+    if (reelsTeste) patch.foi_reels_teste = true;
+  }
 
   const supabase = supabaseServer();
   const { error } = await supabase.from("feed_posts").update(patch).eq("id", postId);
