@@ -65,11 +65,12 @@ export async function computeBaseline(janela: JanelaBaseline = "12m"): Promise<B
   const posts: {
     id: string; post_type: string; post_date: string; views: number; reach: number;
     likes: number; comments: number; shares: number; saves: number; paid_boost: boolean;
+    is_reels_teste: boolean;
   }[] = [];
   for (let de = 0; ; de += 1000) {
     const { data } = await supabase
       .from("feed_posts")
-      .select("id, post_type, post_date, views, reach, likes, comments, shares, saves, paid_boost")
+      .select("id, post_type, post_date, views, reach, likes, comments, shares, saves, paid_boost, is_reels_teste")
       .gte("post_date", inicioUsado)
       .range(de, de + 999);
     if (!data?.length) break;
@@ -89,6 +90,13 @@ export async function computeBaseline(janela: JanelaBaseline = "12m"): Promise<B
     // solto com curtidas > alcance é dado quebrado e não entra na conta.
     if ((p.likes ?? 0) > (p.reach ?? 0)) {
       descartadosPorQualidade++;
+      continue;
+    }
+    // Reels de teste só são mostrados a quem não segue a conta, então o número deles não
+    // é comparável com um post normal. Entram na média só depois que vão pro feed (aí
+    // is_reels_teste volta a false e o reel passa a ser contado normalmente).
+    if (p.is_reels_teste) {
+      excluidos.push({ id: p.id, post_type: p.post_type, post_date: p.post_date, motivo: "Reels de teste (ainda não foi pro feed)" });
       continue;
     }
     if (p.paid_boost) {

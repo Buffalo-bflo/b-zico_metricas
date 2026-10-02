@@ -233,9 +233,31 @@ async function reverificarTestesAbertos(token: string): Promise<string[]> {
     try {
       const r = await graphGet<{ is_shared_to_feed?: boolean }>(id, { fields: "is_shared_to_feed" }, token);
       if (r.is_shared_to_feed === true) {
+        // Este reel está fora da janela normal de sincronização, então as métricas dele
+        // estão congeladas desde a última vez. Atualiza agora, já que ele passa a entrar
+        // nas médias com os números de quem também o viu pelo feed.
+        const insights = await graphGet<{ data: { name: string; values: { value: number }[] }[] }>(
+          `${id}/insights`,
+          { metric: "reach,views,likes,comments,shares,saved" },
+          token
+        );
+        const m = Object.fromEntries((insights.data ?? []).map((x) => [x.name, x.values?.[0]?.value ?? 0]));
+        const { data: atual } = await supabase.from("feed_posts").select("reach, views, likes, comments, shares, saves").eq("id", id).single();
+        // Mesma regra do restante do sync: nunca rebaixar um número já guardado.
+        const maior = (novo: unknown, antigo: unknown) => Math.max(Number(novo ?? 0), Number(antigo ?? 0));
         const { error: upErr } = await supabase
           .from("feed_posts")
-          .update({ shared_to_feed: true, is_reels_teste: false, promovido_em: hoje })
+          .update({
+            shared_to_feed: true,
+            is_reels_teste: false,
+            promovido_em: hoje,
+            reach: maior(m.reach, atual?.reach),
+            views: maior(m.views, atual?.views),
+            likes: maior(m.likes, atual?.likes),
+            comments: maior(m.comments, atual?.comments),
+            shares: maior(m.shares, atual?.shares),
+            saves: maior(m.saved, atual?.saves),
+          })
           .eq("id", id);
         if (upErr) errors.push(`Teste ${id}: ${upErr.message}`);
       }
